@@ -2,16 +2,12 @@ import { StyleSheet } from 'react-native';
 
 const baseStyles = StyleSheet.create({
   container: {
-    backgroundColor: "#F5E1A4",
     flex: 1,
-    maxWidth: 480,
-    width: "100%",
-    alignSelf: "center",
-    overflow: "hidden",
-  }
+    backgroundColor: "#F5E1A4",
+    paddingTop: 24,
+    paddingBottom: 24,
+    paddingHorizontal: 16,
+  },
 });
 
 export default baseStyles;
-
-
-

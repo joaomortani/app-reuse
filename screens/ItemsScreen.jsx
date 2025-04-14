@@ -1,15 +1,13 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ScrollView, Text } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import baseStyles from "@/styles/baseStyles";
-import { useNavigation } from "@react-navigation/native";
+import styles from "@/styles/styles";
 import { FAB } from "react-native-paper";
 import ItemsList from "@/components/ItemsList";
-
+import { router } from "expo-router";
 
 const ItemsScreen = () => {
-  const navigation = useNavigation();
-
-
   const [items, setItems] = useState([
     { id: "1", name: "Item 1", description: "Descrição do Item 1" },
     { id: "2", name: "Item 2", description: "Descrição do Item 2" },
@@ -17,27 +15,25 @@ const ItemsScreen = () => {
   ]);
 
   return (
-    
-    <View style={[baseStyles.container, styles.screenContainer]}>
-    <ItemsList items={items} />
-    <FAB style={styles.fab}
+    <SafeAreaView style={[baseStyles.container, styles.scrollContainer]}>
+      <ScrollView contentContainerStyle={[styles.mainContent, { paddingVertical: 24 }]}>
+        <Text style={styles.formTitle}>Meus Itens</Text>
+        <ItemsList items={items} />
+      </ScrollView>
+      <FAB
+        style={localStyles.fab}
         icon="plus"
-        onPress={() => navigation.navigate("CreateItem")}>
-          Create Item
-          </FAB>
-      
-      
-    </View>
+        onPress={() => router.push("/item/create-item")}
+      >
+        Create Item
+      </FAB>
+    </SafeAreaView>
   );
 };
 
-
 export default ItemsScreen;
 
-const styles = StyleSheet.create({
-  screenContainer: {
-    flex: 1, // Garante que a tela ocupe todo o espaço disponível
-  },
+const localStyles = StyleSheet.create({
   fab: {
     position: "absolute",
     margin: 16,

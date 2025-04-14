@@ -1,30 +1,34 @@
 // /components/ItemsList.jsx
 import React from "react";
-import { FlatList, StyleSheet } from "react-native";
-import { List } from "react-native-paper";
+import { View, StyleSheet } from "react-native";
+import { Card, Title, Paragraph } from "react-native-paper";
 
 const ItemsList = ({ items }) => {
-  const renderItem = ({ item }) => (
-    <List.Item
-      title={item.name}
-      description={item.description}
-      left={(props) => <List.Icon {...props} icon="folder" />}
-    />
-  );
-
   return (
-    <FlatList
-      data={items}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      contentContainerStyle={styles.listContent}
-    />
+    <View style={styles.container}>
+      {items.map((item) => (
+        <Card key={item.id} style={styles.card}>
+          <Card.Content>
+            <Title>{item.name}</Title>
+            <Paragraph>{item.description}</Paragraph>
+          </Card.Content>
+        </Card>
+      ))}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  listContent: {
-    paddingBottom: 80, 
+  container: {
+    gap: 16,
+    paddingBottom: 80,
+  },
+  card: {
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    elevation: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 8,
   },
 });
 
