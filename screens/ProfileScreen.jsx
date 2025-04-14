@@ -1,26 +1,19 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Text } from "react-native";
 
 import ProfileSection from "../components/ProfileSection";
 
 import baseStyles from "@/styles/baseStyles";
+import styles from "@/styles/styles";
 
 const ProfileScreen = () => {
   return (
-    <View style={baseStyles.container}>
-      <Text style={styles.text}>Profile Screen</Text>
+    <SafeAreaView style={baseStyles.container}>
+      <Text style={styles.formTitle}>Profile Screen</Text>
       <ProfileSection />
-
-    </View>
+    </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#37474F",
-  },
-});
 
 export default ProfileScreen;
