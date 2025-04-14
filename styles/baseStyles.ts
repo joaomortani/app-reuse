@@ -12,6 +12,3 @@ const baseStyles = StyleSheet.create({
 });
 
 export default baseStyles;
-
-
-
