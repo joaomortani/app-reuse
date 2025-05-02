@@ -1,3 +1,4 @@
+
 import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 
@@ -47,11 +48,20 @@ const styles = StyleSheet.create({
     borderColor: "#DDE1E6",
     backgroundColor: "#FFF",
     flex: 1,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    marginBottom: 16,
   },
   image: {
-    aspectRatio: 0.8,
+    aspectRatio: 0.75,
     width: "100%",
     minHeight: 220,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
   },
   content: {
     width: "100%",
@@ -79,14 +89,12 @@ const styles = StyleSheet.create({
     color: "#21272A",
   },
   buttonGroup: {
-    display: "flex",
     width: "100%",
     paddingLeft: 16,
     paddingRight: 16,
     paddingBottom: 16,
   },
   button: {
-    display: "flex",
     minHeight: 48,
     paddingRight: 8,
     paddingTop: 12,
@@ -98,8 +106,6 @@ const styles = StyleSheet.create({
   },
   buttonTextContainer: {
     alignSelf: "stretch",
-    marginTop: "auto",
-    marginBottom: "auto",
   },
   buttonText: {
     fontSize: 14,
@@ -111,8 +117,6 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     width: 24,
     alignSelf: "stretch",
-    marginTop: "auto",
-    marginBottom: "auto",
   },
 });
 

@@ -1,26 +1,25 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 
 const CategoryItem = ({ label }) => {
   return (
-    <View style={styles.itemContainer}>
+    <TouchableOpacity style={styles.itemContainer}>
       <View style={styles.circle} />
       <Text style={styles.label}>{label}</Text>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   itemContainer: {
-    flex: 1,              // distribuição igual na linha
-    marginHorizontal: 5,  // espaçamento entre itens
+    flex: 1,
+    marginHorizontal: 5,
     marginTop: 13,
     alignItems: "center",
-    flexDirection: "column", // mudar de row para column para posicionar abaixo
+    flexDirection: "column",
   },
   circle: {
-    strokeWidth: 1,
-    borderColor: "rgba(85, 107, 47, 1)",
+    borderColor: "rgba(46, 125, 50, 0.6)",
     borderStyle: "dashed",
     borderWidth: 1,
     backgroundColor: "#D9D9D9",

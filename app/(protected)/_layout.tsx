@@ -6,7 +6,10 @@ export default function ProtectedTabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#4CAF50', // sua cor do tema
+    tabBarActiveTintColor: '#FFFFFF',
+    tabBarStyle: {
+      backgroundColor: '#1B5E20',
+    },
       }}
     >
       <Tabs.Screen
@@ -19,11 +22,20 @@ export default function ProtectedTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Criar Item',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="house" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="items"
         options={{
           title: 'Item',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="favorite" color={color} size={size} />
+            <MaterialIcons name="category" color={color} size={size} />
           ),
         }}
       />

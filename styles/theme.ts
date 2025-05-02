@@ -4,17 +4,34 @@ export const theme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    primary: '#4CAF50',
+    primary: '#2E7D32',      // Verde ReUse
     onPrimary: '#FFFFFF',
-    secondary: '#388E3C',
-    background: '#F5E1A4',
+    secondary: '#64B5F6',    // Azul claro para botões ou links
+    background: '#F5E1A4',   // Bege claro
     surface: '#FFFFFF',
-    text: '#212121',
-    error: '#B00020',
-    onSurface: '#000000',
-    buttonColor: '#4CAF50',
+    text: '#37474F',         // Texto escuro
+    outline: '#B0BEC5',      // Contornos e bordas
+    error: '#FF7043',        // Avisos, erros
   },
-  roundness: 4,
+  roundness: 8,
+  fonts: {
+    bodySmall: {
+      fontFamily: 'Lato-Regular',
+      fontSize: 14,
+    },
+    bodyLarge: {
+      fontFamily: 'Lato-Regular',
+      fontSize: 16,
+    },
+    titleLarge: {
+      fontFamily: 'Montserrat-Bold',
+      fontSize: 24,
+    },
+    labelLarge: {
+      fontFamily: 'Nunito-Bold',
+      fontSize: 18,
+    },
+  }
 };
 
 export default theme;

@@ -1,10 +1,10 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import TopBar from "../components/TopBar";
+import { View, Text, ScrollView } from "react-native";
 import AppLogo from "../components/AppLogo";
 import CategoryItem from "../components/CategoryItem";
 import TopItems from "../components/TopItem";
 import baseStyles from "@/styles/baseStyles";
+import styles from "@/styles/styles";
 
 const ExploreScreen = () => {
   const categories = ["Electronics", "Furniture", "Clothing", "Books", "Miscellaneous"];
@@ -14,41 +14,27 @@ const ExploreScreen = () => {
 
   return (
     <View style={baseStyles.container}>
-      <ScrollView>
+      <ScrollView contentContainerStyle={[styles.mainContent, { paddingTop: 24 }]}>
         <AppLogo />
-        <Text style={styles.text}>Explore Screen</Text>
-        <View style={styles.categoriesContainer}>
-          <View style={styles.row}>
+        <Text style={styles.formTitle}>Explorar</Text>
+
+        <View style={{ paddingHorizontal: 20, marginTop: 8 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginVertical: 10 }}>
             {firstRow.map((label, index) => (
               <CategoryItem key={index} label={label} />
             ))}
           </View>
-          <View style={styles.row}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginVertical: 10 }}>
             {secondRow.map((label, index) => (
               <CategoryItem key={index} label={label} />
             ))}
           </View>
         </View>
+
         <TopItems />
       </ScrollView>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#37474F",
-  },
-  categoriesContainer: {
-    paddingHorizontal: 20,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 10,
-  },
-});
 
 export default ExploreScreen;
