@@ -10,10 +10,12 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
-2. Start the app
+2. Configure the environment variables (see the section below).
+
+3. Start the app
 
    ```bash
-    npx expo start
+   npx expo start
    ```
 
 In the output, you'll find options to open the app in a
@@ -24,6 +26,31 @@ In the output, you'll find options to open the app in a
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## Environment configuration
+
+The app reads its backend URLs from a `.env` file. An example is provided in `.env.example`:
+
+```env
+EXPO_PUBLIC_API_URL=http://localhost:3000
+```
+
+To configure the project:
+
+1. Copy the example file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Update `EXPO_PUBLIC_API_URL` to point to the desired backend.
+   - When running the backend locally with Docker on the same machine, keep `http://localhost:3000` or adjust the port to match the container mapping.
+   - When the backend runs on another host or in production, replace the value with the public URL (for example, `https://api.example.com`).
+   - Ensure that the configured backend exposes the authentication endpoints used by the mobile app: `POST /auth/login` and `POST /auth/register`.
+
+3. Restart Expo after changing the `.env` file so the new value is loaded.
+
+Any developer can now switch between environments by editing a single variable, allowing the mobile app to communicate with local, staging, or production APIs.
 
 ## Get a fresh project
 

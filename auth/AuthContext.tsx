@@ -6,7 +6,8 @@ import React, {
   ReactNode,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as auth from './authService';
+import { router } from 'expo-router';
+import * as authService from './authService';
 
 type User = {
   id?: string;

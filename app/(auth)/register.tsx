@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../auth/AuthContext';
@@ -11,16 +11,20 @@ export default function RegisterScreen() {
   const { signUp } = useAuth();
   const router = useRouter();
 
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRegister = async () => {
     try {
       setLoading(true);
       await signUp(email, password);
+      router.replace('/');
     } catch (err) {
-      Alert.alert('Erro', 'Erro ao cadastrar usuário.');
+      const message = err instanceof Error ? err.message : 'Erro ao cadastrar usuário.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -39,12 +43,24 @@ export default function RegisterScreen() {
 
             <View style={styles.formFields}>
               <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>Nome</Text>
+                <TextInput
+                  mode="outlined"
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                  style={styles.textInput}
+                />
+              </View>
+
+              <View style={styles.formField}>
                 <Text style={styles.fieldLabel}>Email</Text>
                 <TextInput
                   mode="outlined"
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
+                  keyboardType="email-address"
                   style={styles.textInput}
                 />
               </View>
@@ -60,6 +76,8 @@ export default function RegisterScreen() {
                 />
               </View>
             </View>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <View style={styles.formActions}>
               <Button mode="contained" onPress={handleRegister} loading={loading} disabled={loading}>
