@@ -1,56 +1,62 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '@/services/apiClient';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+const API_URL = process.env.API_URL || 'http://0.0.0.0:8090/api';
 
-type AuthResponse = {
-  accessToken: string;
-  refreshToken: string;
+type LoginResponse = {
+  token?: string;
+  user?: Record<string, unknown> | null;
 };
 
-const parseResponse = async (response: Response) => {
+export async function login(email: string, password: string): Promise<LoginResponse> {
+  const response = await fetch(`${API_URL}/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await parseResponse(response);
+
   if (!response.ok) {
-    const message = `Request failed with status ${response.status}`;
-    throw new Error(message);
+    throw new Error(extractErrorMessage(data, 'Credenciais inválidas.'));
   }
 
-  const payload = await response.json();
-  return (payload?.data ?? payload) as AuthResponse;
-};
-
-export async function login(email: string, password: string) {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-
-  const data = await parseResponse(response);
-
-  if (!data.accessToken || !data.refreshToken) {
-    throw new Error('Login response missing tokens');
+  if (!data.token || typeof data.token !== 'string') {
+    throw new Error('Resposta inválida da API.');
   }
 
-  await AsyncStorage.setItem('accessToken', data.accessToken);
-  await AsyncStorage.setItem('refreshToken', data.refreshToken);
-
-  return data.accessToken;
-}
-
-export async function register(email: string, password: string) {
-  const response = await fetch(`${API_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-
-  const data = await parseResponse(response);
-
-  await AsyncStorage.setItem('accessToken', data.accessToken);
-  await AsyncStorage.setItem('refreshToken', data.refreshToken);
-
+  const data: LoginResponse = await response.json();
+  if (data?.token) {
+    await AsyncStorage.setItem('token', data.token);
+  }
+  if (data?.user) {
+    await AsyncStorage.setItem('user', JSON.stringify(data.user));
+  }
   return data;
 }
 
+export async function register(name: string, email: string, password: string) {
+  const response = await fetch(`${API_URL}/v1/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password }),
+  });
+
+  const data = await parseResponse(response);
+
+  if (!response.ok) {
+    throw new Error(extractErrorMessage(data, 'Não foi possível cadastrar o usuário.'));
+  }
+
+  if (data.token && typeof data.token === 'string') {
+    await AsyncStorage.setItem('token', data.token);
+    return data.token;
+  }
+
+  return null;
+}
+
 export async function logout() {
-  await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
+  await AsyncStorage.removeItem('token');
+  await AsyncStorage.removeItem('user');
 }

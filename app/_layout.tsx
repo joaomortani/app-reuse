@@ -2,7 +2,7 @@ import { Stack, router, usePathname } from 'expo-router';
 import { AuthProvider, useAuth } from '../auth/AuthContext';
 import { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { PaperProvider } from 'react-native-paper'; // precisa importar aqui também!
+import { PaperProvider } from 'react-native-paper';
 import theme from '../styles/theme';
 
 export default function Layout() {
@@ -16,7 +16,7 @@ export default function Layout() {
 }
 
 function LayoutInner() {
-  const { userToken, loading } = useAuth();
+  const { accessToken, loading } = useAuth();
   const pathname = usePathname();
 
   useEffect(() => {

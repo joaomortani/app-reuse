@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, Text } from "react-native";
+import { StyleSheet, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import baseStyles from "@/styles/baseStyles";
 import styles from "@/styles/styles";
@@ -10,11 +10,16 @@ import { getItems } from "@/services/itemService";
 
 const ItemsScreen = () => {
   const [items, setItems] = useState([]);
+  const { accessToken } = useAuth();
 
   useEffect(() => {
     const fetchItems = async () => {
+      if (!accessToken) {
+        return;
+      }
+
       try {
-        const data = await getItems();
+        const data = await getItems(accessToken);
         setItems(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erro ao buscar itens:", err);
@@ -22,7 +27,7 @@ const ItemsScreen = () => {
     };
 
     fetchItems();
-  }, []);
+  }, [accessToken]);
 
   return (
     <SafeAreaView style={[baseStyles.container, styles.scrollContainer]}>
