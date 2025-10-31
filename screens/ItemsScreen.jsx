@@ -6,17 +6,15 @@ import styles from "@/styles/styles";
 import { FAB } from "react-native-paper";
 import ItemsList from "@/components/ItemsList";
 import { router } from "expo-router";
-import { useAuth } from "@/auth/AuthContext";
 import { getItems } from "@/services/itemService";
 
 const ItemsScreen = () => {
   const [items, setItems] = useState([]);
-  const { userToken } = useAuth();
 
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const data = await getItems(userToken);
+        const data = await getItems();
         setItems(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erro ao buscar itens:", err);
@@ -24,7 +22,7 @@ const ItemsScreen = () => {
     };
 
     fetchItems();
-  }, [userToken]);
+  }, []);
 
   return (
     <SafeAreaView style={[baseStyles.container, styles.scrollContainer]}>
