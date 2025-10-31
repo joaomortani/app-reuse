@@ -10,7 +10,7 @@ import styles from '@/styles/styles';
 import { createItem } from '@/services/itemService';
 
 const CreateItemScreen = () => {
-  const { userToken } = useAuth();
+  const { accessToken } = useAuth();
   const router = useRouter();
 
   const [title, setTitle] = useState('');
@@ -40,6 +40,12 @@ const CreateItemScreen = () => {
       return;
     }
 
+    if (!accessToken) {
+      Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
+      router.replace('/login');
+      return;
+    }
+
     try {
       setLoading(true);
       const payload = {
@@ -50,12 +56,12 @@ const CreateItemScreen = () => {
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
         images: [
-          "https://example.com/img1.jpg",
-          "https://example.com/img2.jpg"
-        ], // substitua futuramente com seleção real de imagem
+          'https://example.com/img1.jpg',
+          'https://example.com/img2.jpg',
+        ],
       };
 
-      await createItem(payload, userToken);
+      await createItem(payload, accessToken);
       Alert.alert('Sucesso', 'Item criado com sucesso!');
       router.replace('/');
     } catch (err) {
