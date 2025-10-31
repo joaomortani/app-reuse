@@ -36,6 +36,12 @@ const CreateItemScreen = () => {
       return;
     }
 
+    if (!accessToken) {
+      Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
+      router.replace('/login');
+      return;
+    }
+
     try {
       setLoading(true);
       const payload = {
@@ -44,9 +50,9 @@ const CreateItemScreen = () => {
         lat: parseFloat(lat),
         lng: parseFloat(lng),
         images: [
-          "https://example.com/img1.jpg",
-          "https://example.com/img2.jpg"
-        ], // substitua futuramente com seleção real de imagem
+          'https://example.com/img1.jpg',
+          'https://example.com/img2.jpg',
+        ],
       };
 
       await createItem(payload);

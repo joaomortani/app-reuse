@@ -1,20 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, Text } from "react-native";
+import { StyleSheet, ScrollView, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import baseStyles from "@/styles/baseStyles";
 import styles from "@/styles/styles";
 import { FAB } from "react-native-paper";
 import ItemsList from "@/components/ItemsList";
 import { router } from "expo-router";
-import { useAuth } from "@/auth/AuthContext";
 import { getItems } from "@/services/itemService";
 
 const ItemsScreen = () => {
   const [items, setItems] = useState([]);
-  const { userToken } = useAuth();
+  const { accessToken } = useAuth();
 
   useEffect(() => {
     const fetchItems = async () => {
+      if (!accessToken) {
+        return;
+      }
+
       try {
         if (!userToken) {
           setItems([]);
@@ -29,7 +32,7 @@ const ItemsScreen = () => {
     };
 
     fetchItems();
-  }, [userToken]);
+  }, [accessToken]);
 
   return (
     <SafeAreaView style={[baseStyles.container, styles.scrollContainer]}>
