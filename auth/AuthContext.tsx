@@ -69,10 +69,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signUp = async (name: string, email: string, password: string) => {
-    const authData = await authService.register(name, email, password);
-    setUser(authData.user);
-    setAccessToken(authData.accessToken);
-    router.replace('/');
+    const token = await auth.register(name, email, password);
+    if (token) {
+      setUserToken(token);
+      return;
+    }
+
+    const loginToken = await auth.login(email, password);
+    setUserToken(loginToken);
   };
 
   const signOut = async () => {

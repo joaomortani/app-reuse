@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../auth/AuthContext';
@@ -15,13 +15,16 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRegister = async () => {
     try {
       setLoading(true);
+      setError(null);
       await signUp(name, email, password);
     } catch (err) {
-      Alert.alert('Erro', 'Erro ao cadastrar usuário.');
+      const message = err instanceof Error ? err.message : 'Erro ao cadastrar usuário.';
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -73,6 +76,8 @@ export default function RegisterScreen() {
                 />
               </View>
             </View>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <View style={styles.formActions}>
               <Button mode="contained" onPress={handleRegister} loading={loading} disabled={loading}>
