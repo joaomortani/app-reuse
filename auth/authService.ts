@@ -1,5 +1,5 @@
-const API_URL = process.env.API_URL || 'http://0.0.0.0:8090/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '@/services/apiClient';
 
 type ApiResponse = {
   token?: string;
@@ -72,5 +72,5 @@ export async function register(name: string, email: string, password: string) {
 }
 
 export async function logout() {
-  await AsyncStorage.removeItem('token');
+  await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
 }
