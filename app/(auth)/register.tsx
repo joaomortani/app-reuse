@@ -20,8 +20,8 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     try {
       setLoading(true);
-      setError(null);
-      await signUp(name, email, password);
+      await signUp(email, password);
+      router.replace('/');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao cadastrar usuário.';
       setError(message);
