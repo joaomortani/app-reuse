@@ -10,7 +10,7 @@ export function AuthProvider({ children }: any) {
 
   useEffect(() => {
     const loadToken = async () => {
-      const token = await AsyncStorage.getItem('token');
+      const token = await AsyncStorage.getItem('accessToken');
       setUserToken(token);
       setLoading(false);
     };
@@ -23,7 +23,10 @@ export function AuthProvider({ children }: any) {
   };
 
   const signUp = async (email: string, password: string) => {
-    const token = await auth.register(email, password);
+    const data = await auth.register(email, password);
+    if (data?.accessToken) {
+      setUserToken(data.accessToken);
+    }
   };
 
   const signOut = async () => {
