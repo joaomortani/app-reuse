@@ -16,7 +16,12 @@ const ItemsScreen = () => {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const data = await getItems(userToken);
+        if (!userToken) {
+          setItems([]);
+          return;
+        }
+
+        const data = await getItems();
         setItems(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erro ao buscar itens:", err);
