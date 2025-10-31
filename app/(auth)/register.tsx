@@ -11,6 +11,7 @@ export default function RegisterScreen() {
   const { signUp } = useAuth();
   const router = useRouter();
 
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +19,7 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     try {
       setLoading(true);
-      await signUp(email, password);
+      await signUp(name, email, password);
     } catch (err) {
       Alert.alert('Erro', 'Erro ao cadastrar usuário.');
     } finally {
@@ -39,12 +40,24 @@ export default function RegisterScreen() {
 
             <View style={styles.formFields}>
               <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>Nome</Text>
+                <TextInput
+                  mode="outlined"
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                  style={styles.textInput}
+                />
+              </View>
+
+              <View style={styles.formField}>
                 <Text style={styles.fieldLabel}>Email</Text>
                 <TextInput
                   mode="outlined"
                   value={email}
                   onChangeText={setEmail}
                   autoCapitalize="none"
+                  keyboardType="email-address"
                   style={styles.textInput}
                 />
               </View>

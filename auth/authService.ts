@@ -1,56 +1,83 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '@/services/apiClient';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+export const ACCESS_TOKEN_KEY = 'accessToken';
+export const REFRESH_TOKEN_KEY = 'refreshToken';
 
-type AuthResponse = {
+type AuthTokens = {
   accessToken: string;
   refreshToken: string;
 };
 
-const parseResponse = async (response: Response) => {
-  if (!response.ok) {
-    const message = `Request failed with status ${response.status}`;
-    throw new Error(message);
-  }
+type AuthResponse<TUser = any> = {
+  user: TUser;
+} & AuthTokens;
 
-  const payload = await response.json();
-  return (payload?.data ?? payload) as AuthResponse;
-};
-
-export async function login(email: string, password: string) {
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-
-  const data = await parseResponse(response);
-
-  if (!data.accessToken || !data.refreshToken) {
-    throw new Error('Login response missing tokens');
-  }
-
-  await AsyncStorage.setItem('accessToken', data.accessToken);
-  await AsyncStorage.setItem('refreshToken', data.refreshToken);
-
-  return data.accessToken;
+async function persistTokens({ accessToken, refreshToken }: AuthTokens) {
+  await AsyncStorage.multiSet([
+    [ACCESS_TOKEN_KEY, accessToken],
+    [REFRESH_TOKEN_KEY, refreshToken],
+  ]);
 }
 
-export async function register(email: string, password: string) {
-  const response = await fetch(`${API_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
+export async function login<TUser = any>(email: string, password: string): Promise<AuthResponse<TUser>> {
+  const { data } = await apiClient.post<AuthResponse<TUser>>('/auth/login', { email, password });
 
-  const data = await parseResponse(response);
+  if (!data?.accessToken || !data?.refreshToken) {
+    throw new Error('Tokens not provided by login response');
+  }
 
-  await AsyncStorage.setItem('accessToken', data.accessToken);
-  await AsyncStorage.setItem('refreshToken', data.refreshToken);
+  await persistTokens(data);
 
   return data;
 }
 
+export async function register<TUser = any>(name: string, email: string, password: string): Promise<AuthResponse<TUser>> {
+  const { data } = await apiClient.post<AuthResponse<TUser>>('/users/register', { name, email, password });
+
+  if (!data?.accessToken || !data?.refreshToken) {
+    throw new Error('Tokens not provided by register response');
+  }
+
+  await persistTokens(data);
+
+  return data;
+}
+
+export async function getCurrentUser<TUser = any>(): Promise<TUser> {
+  const accessToken = await AsyncStorage.getItem(ACCESS_TOKEN_KEY);
+
+  if (!accessToken) {
+    throw new Error('No access token available');
+  }
+
+  const { data } = await apiClient.get<TUser>('/auth/me', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  return data;
+}
+
+export async function refresh(): Promise<string> {
+  const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+
+  if (!refreshToken) {
+    throw new Error('No refresh token available');
+  }
+
+  const { data } = await apiClient.post<{ accessToken: string }>('/auth/refresh', { refreshToken });
+
+  if (!data?.accessToken) {
+    throw new Error('Refresh token response did not include a new access token');
+  }
+
+  await AsyncStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+
+  return data.accessToken;
+}
+
 export async function logout() {
-  await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
+  await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
 }
