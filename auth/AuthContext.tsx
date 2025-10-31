@@ -22,8 +22,15 @@ export function AuthProvider({ children }: any) {
     setUserToken(token);
   };
 
-  const signUp = async (email: string, password: string) => {
-    const token = await auth.register(email, password);
+  const signUp = async (name: string, email: string, password: string) => {
+    const token = await auth.register(name, email, password);
+    if (token) {
+      setUserToken(token);
+      return;
+    }
+
+    const loginToken = await auth.login(email, password);
+    setUserToken(loginToken);
   };
 
   const signOut = async () => {
