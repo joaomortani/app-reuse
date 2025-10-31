@@ -25,6 +25,13 @@ const styles = StyleSheet.create({
     gap: 20,
     marginBottom: 32,
   },
+  errorText: {
+    color: '#D32F2F',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+    fontFamily: 'Nunito-Bold',
+  },
   formField: {
     gap: 8,
   },
