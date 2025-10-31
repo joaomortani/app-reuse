@@ -19,7 +19,12 @@ const ItemsScreen = () => {
       }
 
       try {
-        const data = await getItems(accessToken);
+        if (!userToken) {
+          setItems([]);
+          return;
+        }
+
+        const data = await getItems();
         setItems(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erro ao buscar itens:", err);

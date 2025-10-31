@@ -9,13 +9,12 @@ import styles from '@/styles/styles';
 import { createItem } from '@/services/itemService';
 
 const CreateItemScreen = () => {
-  const { accessToken } = useAuth();
   const router = useRouter();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [latitude, setLatitude] = useState('');
-  const [longitude, setLongitude] = useState('');
+  const [lat, setLat] = useState('');
+  const [lng, setLng] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -26,13 +25,13 @@ const CreateItemScreen = () => {
         return;
       }
       const location = await Location.getCurrentPositionAsync({});
-      setLatitude(String(location.coords.latitude));
-      setLongitude(String(location.coords.longitude));
+      setLat(String(location.coords.latitude));
+      setLng(String(location.coords.longitude));
     })();
   }, []);
 
   const handleSubmit = async () => {
-    if (!title || !description || !latitude || !longitude) {
+    if (!title || !description || !lat || !lng) {
       Alert.alert('Erro', 'Todos os campos obrigatórios devem ser preenchidos.');
       return;
     }
@@ -48,17 +47,15 @@ const CreateItemScreen = () => {
       const payload = {
         title,
         description,
-        category,
-        condition,
-        latitude: parseFloat(latitude),
-        longitude: parseFloat(longitude),
+        lat: parseFloat(lat),
+        lng: parseFloat(lng),
         images: [
           'https://example.com/img1.jpg',
           'https://example.com/img2.jpg',
         ],
       };
 
-      await createItem(payload, accessToken);
+      await createItem(payload);
       Alert.alert('Sucesso', 'Item criado com sucesso!');
       router.replace('/');
     } catch (err) {
@@ -76,8 +73,8 @@ const CreateItemScreen = () => {
         <View style={styles.formFields}>
           <TextInput label="Título" value={title} onChangeText={setTitle} mode="outlined" style={styles.textInput} />
           <TextInput label="Descrição" value={description} onChangeText={setDescription} multiline mode="outlined" style={styles.textInput} />
-          <TextInput label="Latitude" value={latitude} disabled mode="outlined" style={styles.textInput} />
-          <TextInput label="Longitude" value={longitude} disabled mode="outlined" style={styles.textInput} />
+          <TextInput label="Latitude" value={lat} disabled mode="outlined" style={styles.textInput} />
+          <TextInput label="Longitude" value={lng} disabled mode="outlined" style={styles.textInput} />
         </View>
 
         <View style={styles.formActions}>

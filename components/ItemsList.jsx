@@ -9,7 +9,7 @@ const ItemsList = ({ items }) => {
       {items.map((item) => (
         <Card key={item.id} style={styles.card}>
           <Card.Content>
-            <Title>{item.name}</Title>
+            <Title>{item.title}</Title>
             <Paragraph>{item.description}</Paragraph>
           </Card.Content>
         </Card>

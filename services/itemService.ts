@@ -7,12 +7,11 @@ export interface CreateItemPayload {
   lng: number;
 }
 
-export async function createItem(payload: any, accessToken: string) {
+export async function createItem(payload: any) {
   try {
     const response = await axios.post(`${API_URL}/v1/items`, payload, {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
       },
     });
 
@@ -22,17 +21,13 @@ export async function createItem(payload: any, accessToken: string) {
     throw new Error('Erro ao criar item');
   }
 }
-
-export async function getItems(accessToken: string) {
+export async function getItems() {
   try {
-    const response = await axios.get(`${API_URL}/v1/items`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    return response.data;
+    const response = await axios.get(`${API_URL}/v1/items`);
+    return response.data?.data ?? [];
   } catch (error: any) {
     console.error('Erro ao listar itens:', error?.response?.data || error.message);
     throw new Error('Erro ao listar itens');
   }
 }
+  
