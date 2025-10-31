@@ -3,6 +3,8 @@ import apiClient from '@/services/apiClient';
 
 const API_URL = process.env.API_URL || 'http://0.0.0.0:8090/api';
 
+const API_URL = process.env.API_URL || 'http://0.0.0.0:8090/api';
+
 type LoginResponse = {
   token?: string;
   user?: Record<string, unknown> | null;
