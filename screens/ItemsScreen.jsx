@@ -6,7 +6,6 @@ import styles from "@/styles/styles";
 import { FAB } from "react-native-paper";
 import ItemsList from "@/components/ItemsList";
 import { router } from "expo-router";
-import { useAuth } from "@/auth/AuthContext";
 import { getItems } from "@/services/itemService";
 
 const ItemsScreen = () => {

@@ -1,6 +1,11 @@
-import axios from 'axios';
+import apiClient from './apiClient';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8090/api';
+export interface CreateItemPayload {
+  title: string;
+  description: string;
+  lat: number;
+  lng: number;
+}
 
 export async function createItem(payload: any, accessToken: string) {
   try {
@@ -10,7 +15,8 @@ export async function createItem(payload: any, accessToken: string) {
         Authorization: `Bearer ${accessToken}`,
       },
     });
-    return response.data;
+
+    return response.data?.data ?? response.data;
   } catch (error: any) {
     console.error('Erro ao criar item:', error?.response?.data || error.message);
     throw new Error('Erro ao criar item');
