@@ -23,10 +23,6 @@ export async function login(email: string, password: string): Promise<LoginRespo
     throw new Error(extractErrorMessage(data, 'Credenciais inválidas.'));
   }
 
-  if (!data.token || typeof data.token !== 'string') {
-    throw new Error('Resposta inválida da API.');
-  }
-
   const data: LoginResponse = await response.json();
   if (data?.token) {
     await AsyncStorage.setItem('token', data.token);
