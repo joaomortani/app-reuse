@@ -2,10 +2,13 @@ import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { requestForegroundPermissionsAsync, getCurrentPositionAsync } from "expo-location";
+import { useAuth } from "@/auth/AuthContext";
+import { getItems } from "@/services/itemService";
 
 const Map = () => {
   const [location, setLocation] = useState(null);
   const [markers, setMarkers] = useState([]);
+  const { userToken } = useAuth();
 
   async function requestLocationPermission() {
     const { status } = await requestForegroundPermissionsAsync();
@@ -19,33 +22,54 @@ const Map = () => {
     requestLocationPermission();
   }, []);
     
-    useEffect(() => {
-      if (location) {
-        setMarkers([
-          {
-            id: "1",
-            latitude: location.coords.latitude + 0.001,
-            longitude: location.coords.longitude + 0.001,
-            title: "Item 1",
-            description: "Descrição do item 1",
-          },
-          {
-            id: "2",
-            latitude: location.coords.latitude - 0.001,
-            longitude: location.coords.longitude - 0.001,
-            title: "Item 2",
-            description: "Descrição do item 2",
-          },
-          {
-            id: "3",
-            latitude: location.coords.latitude + 0.002,
-            longitude: location.coords.longitude - 0.001,
-            title: "Item 3",
-            description: "Descrição do item 3",
-          },
-        ]);
+  useEffect(() => {
+    if (!location || !userToken) {
+      return;
+    }
+
+    let isSubscribed = true;
+
+    const fetchMarkers = async () => {
+      try {
+        const data = await getItems(userToken);
+        if (!isSubscribed) {
+          return;
+        }
+
+        const formattedMarkers = (Array.isArray(data) ? data : [])
+          .map((item) => {
+            const latitude = Number(item?.lat);
+            const longitude = Number(item?.lng);
+
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+              return null;
+            }
+
+            return {
+              id:
+                item?.id?.toString() ||
+                item?._id?.toString() ||
+                `${latitude}-${longitude}-${item?.title ?? ""}`,
+              latitude,
+              longitude,
+              title: item?.title || "Item",
+              description: item?.description || "",
+            };
+          })
+          .filter(Boolean);
+
+        setMarkers(formattedMarkers);
+      } catch (error) {
+        console.error("Erro ao carregar itens no mapa:", error);
       }
-    }, [location]);
+    };
+
+    fetchMarkers();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [location, userToken]);
   
   return (
     <View style={{ flex: 1 }}>
@@ -59,8 +83,7 @@ const Map = () => {
             longitudeDelta: 0.005,
           }}
         >
-                  
-        <Marker
+          <Marker
             coordinate={{
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
