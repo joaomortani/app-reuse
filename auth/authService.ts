@@ -1,35 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '@/services/apiClient';
 
-type ApiResponse = {
+const API_URL = process.env.API_URL || 'http://0.0.0.0:8090/api';
+
+type LoginResponse = {
   token?: string;
-  message?: string;
-  [key: string]: unknown;
+  user?: Record<string, unknown> | null;
 };
 
-const parseResponse = async (response: Response): Promise<ApiResponse> => {
-  const text = await response.text();
-
-  if (!text) {
-    return {};
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    return { message: text };
-  }
-};
-
-const extractErrorMessage = (data: ApiResponse, fallback: string) => {
-  if (typeof data.message === 'string' && data.message.trim().length > 0) {
-    return data.message;
-  }
-
-  return fallback;
-};
-
-export async function login(email: string, password: string) {
+export async function login(email: string, password: string): Promise<LoginResponse> {
   const response = await fetch(`${API_URL}/v1/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -46,8 +25,14 @@ export async function login(email: string, password: string) {
     throw new Error('Resposta inválida da API.');
   }
 
-  await AsyncStorage.setItem('token', data.token);
-  return data.token;
+  const data: LoginResponse = await response.json();
+  if (data?.token) {
+    await AsyncStorage.setItem('token', data.token);
+  }
+  if (data?.user) {
+    await AsyncStorage.setItem('user', JSON.stringify(data.user));
+  }
+  return data;
 }
 
 export async function register(name: string, email: string, password: string) {
@@ -72,5 +57,6 @@ export async function register(name: string, email: string, password: string) {
 }
 
 export async function logout() {
-  await AsyncStorage.multiRemove([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
+  await AsyncStorage.removeItem('token');
+  await AsyncStorage.removeItem('user');
 }

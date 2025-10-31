@@ -1,114 +1,144 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as authService from './authService';
 
-type AuthContextValue<TUser = any> = {
-  user: TUser | null;
-  accessToken: string | null;
+type User = {
+  id?: string;
+  name?: string;
+  email?: string;
+  [key: string]: any;
+};
+
+type AuthContextValue = {
+  userToken: string | null;
+  user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (name: string, email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  updateUser: (user: TUser | null) => void;
+  updateUser: (updates: Partial<User>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-type AuthProviderProps = {
-  children: ReactNode;
-};
+async function persistToken(token: string | null) {
+  if (token) {
+    await AsyncStorage.setItem('token', token);
+  } else {
+    await AsyncStorage.removeItem('token');
+  }
+}
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<any | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+function sanitizeUser(user: User | null): User | null {
+  if (!user) {
+    return null;
+  }
+
+  const sanitizedEntries = Object.entries(user).filter(
+    ([, value]) => value !== undefined && value !== null,
+  );
+
+  if (sanitizedEntries.length === 0) {
+    return null;
+  }
+
+  return Object.fromEntries(sanitizedEntries) as User;
+}
+
+async function persistUser(user: User | null) {
+  const sanitizedUser = sanitizeUser(user);
+
+  if (sanitizedUser) {
+    await AsyncStorage.setItem('user', JSON.stringify(sanitizedUser));
+  } else {
+    await AsyncStorage.removeItem('user');
+  }
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [userToken, setUserToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const initialize = async () => {
+    const loadSession = async () => {
       try {
-        const [[, storedAccessToken], [, storedRefreshToken]] = await AsyncStorage.multiGet([
-          authService.ACCESS_TOKEN_KEY,
-          authService.REFRESH_TOKEN_KEY,
+        const [storedToken, storedUser] = await Promise.all([
+          AsyncStorage.getItem('token'),
+          AsyncStorage.getItem('user'),
         ]);
 
-        if (storedAccessToken && storedRefreshToken) {
-          setAccessToken(storedAccessToken);
-
-          try {
-            const currentUser = await authService.getCurrentUser();
-            setUser(currentUser);
-          } catch (error) {
-            try {
-              const refreshedAccessToken = await authService.refresh();
-              setAccessToken(refreshedAccessToken);
-              const currentUser = await authService.getCurrentUser();
-              setUser(currentUser);
-            } catch (refreshError) {
-              await authService.logout();
-              setUser(null);
-              setAccessToken(null);
-            }
-          }
+        setUserToken(storedToken);
+        if (storedUser) {
+          setUser(sanitizeUser(JSON.parse(storedUser)));
         }
       } catch (error) {
-        console.error('Erro ao inicializar autenticação:', error);
+        console.error('Erro ao carregar sessão do usuário', error);
       } finally {
         setLoading(false);
       }
     };
 
-    initialize();
+    loadSession();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const authData = await authService.login(email, password);
-    setUser(authData.user);
-    setAccessToken(authData.accessToken);
-    router.replace('/');
+    const data = await auth.login(email, password);
+    const token = data?.token ?? null;
+    const userData = (data?.user as User | null) ?? null;
+
+    setUserToken(token);
+    setUser(sanitizeUser(userData));
+
+    await persistToken(token);
+    await persistUser(userData);
   };
 
-  const signUp = async (name: string, email: string, password: string) => {
-    const token = await auth.register(name, email, password);
-    if (token) {
-      setUserToken(token);
-      return;
-    }
-
-    const loginToken = await auth.login(email, password);
-    setUserToken(loginToken);
+  const signUp = async (email: string, password: string) => {
+    await auth.register(email, password);
   };
 
   const signOut = async () => {
-    await authService.logout();
+    await auth.logout();
+    setUserToken(null);
     setUser(null);
-    setAccessToken(null);
-    router.replace('/login');
+    await persistToken(null);
+    await persistUser(null);
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        accessToken,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        updateUser: setUser,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const updateUser = async (updates: Partial<User>) => {
+    let mergedUser: User | null = null;
+    setUser((prevUser) => {
+      mergedUser = sanitizeUser({ ...(prevUser ?? {}), ...updates });
+      return mergedUser;
+    });
+    await persistUser(mergedUser);
+  };
+
+  const value: AuthContextValue = {
+    userToken,
+    user,
+    loading,
+    signIn,
+    signUp,
+    signOut,
+    updateUser,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-
   if (!context) {
-    throw new Error('useAuth deve ser usado dentro de um AuthProvider');
+    throw new Error('useAuth deve ser utilizado dentro de um AuthProvider');
   }
-
   return context;
-}
+};
