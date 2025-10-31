@@ -21,15 +21,18 @@ function LayoutInner() {
 
   useEffect(() => {
     if (!loading) {
-      if (!userToken && pathname !== '/login') {
+      const isAuthRoute =
+        pathname.startsWith('/(auth)') || pathname === '/login' || pathname === '/register';
+
+      if (!userToken && !isAuthRoute) {
         router.replace('/login');
       }
 
-      if (userToken && pathname.startsWith('/(auth)')) {
+      if (userToken && isAuthRoute) {
         router.replace('/');
       }
     }
-  }, [loading, userToken]);
+  }, [loading, userToken, pathname]);
 
   if (loading) {
     return (

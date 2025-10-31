@@ -19,6 +19,7 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       await signIn(email, password);
+      router.replace('/');
     } catch (err) {
       Alert.alert('Erro', 'Credenciais inválidas ou erro ao conectar.');
     } finally {

@@ -19,6 +19,7 @@ export default function RegisterScreen() {
     try {
       setLoading(true);
       await signUp(email, password);
+      router.replace('/');
     } catch (err) {
       Alert.alert('Erro', 'Erro ao cadastrar usuário.');
     } finally {
