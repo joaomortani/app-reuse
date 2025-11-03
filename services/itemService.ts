@@ -5,7 +5,7 @@ export interface CreateItemPayload {
   description: string;
   lat: number;
   lng: number;
-  category?: string;
+  category?: string | null;
   condition?: string;
   images?: string[];
 }
@@ -22,7 +22,12 @@ function buildAuthHeaders(token?: string) {
 
 export async function createItem(payload: CreateItemPayload, token?: string) {
   try {
-    const response = await apiClient.post('/items', payload, {
+    const body: CreateItemPayload = {
+      ...payload,
+      images: payload.images && payload.images.length > 0 ? payload.images : ['https://placehold.co/600x400?text=Reuse'],
+    };
+
+    const response = await apiClient.post('/items', body, {
       headers: buildAuthHeaders(token),
     });
 
@@ -35,21 +40,50 @@ export async function createItem(payload: CreateItemPayload, token?: string) {
 }
 
 export async function getMyItems(token?: string, userId?: string) {
-  try {
-    // Como /items/mine não existe, vamos buscar todos os itens e filtrar pelo ownerId
-    const response = await apiClient.get('/items?page=1&limit=100', {
-      headers: buildAuthHeaders(token),
-    });
-    
-    // Backend retorna: {success: true, data: {items: [...], total, page, limit, totalPages}}
-    const allItems = response.data?.data?.items || response.data?.data || [];
-    
-    // Filtrar apenas os itens do usuário atual
-    if (userId && Array.isArray(allItems)) {
-      return allItems.filter((item: any) => item.ownerId === userId || item.owner?.id === userId);
+  const headers = buildAuthHeaders(token);
+
+  const normalizeItems = (data: any) => {
+    if (!data) {
+      return [];
     }
-    
-    // Se não tiver userId, retornar todos (o backend pode implementar /items/mine depois)
+
+    if (Array.isArray(data?.items)) {
+      return data.items;
+    }
+
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    if (Array.isArray(data?.data?.items)) {
+      return data.data.items;
+    }
+
+    if (Array.isArray(data?.data)) {
+      return data.data;
+    }
+
+    return [];
+  };
+
+  try {
+    const response = await apiClient.get('/items/mine', { headers });
+    const mine = normalizeItems(response.data?.data ?? response.data);
+    return Array.isArray(mine) ? mine : [];
+  } catch (error: any) {
+    if (error?.response?.status && error.response.status !== 404) {
+      console.warn('Erro ao consultar /items/mine, tentando fallback:', error?.response?.data || error.message);
+    }
+  }
+
+  try {
+    const response = await apiClient.get('/items?page=1&limit=100', { headers });
+    const allItems = normalizeItems(response.data?.data ?? response.data);
+
+    if (userId && Array.isArray(allItems)) {
+      return allItems.filter((item: any) => item?.ownerId === userId || item?.owner?.id === userId);
+    }
+
     return Array.isArray(allItems) ? allItems : [];
   } catch (error: any) {
     console.error('Erro ao listar meus itens:', error?.response?.data || error.message);
