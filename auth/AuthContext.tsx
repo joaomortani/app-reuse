@@ -21,7 +21,7 @@ type AuthContextValue = {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
 };
@@ -94,15 +94,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const token = data?.token ?? null;
     const userData = (data?.user as User | null) ?? null;
 
-    setUserToken(token);
+    // Buscar token do AsyncStorage (já foi salvo pelo authService)
+    const storedToken = await AsyncStorage.getItem('token');
+    const finalToken = token || storedToken;
+
+    // Atualizar estado
+    setUserToken(finalToken);
     setUser(sanitizeUser(userData));
 
-    await persistToken(token);
-    await persistUser(userData);
+    // Persistir no storage (garantir que está salvo)
+    if (finalToken) {
+      await persistToken(finalToken);
+    }
+    if (userData) {
+      await persistUser(userData);
+    }
   };
 
-  const signUp = async (email: string, password: string) => {
-    await authService.register(email, password);
+  const signUp = async (name: string, email: string, password: string) => {
+    await authService.register(name, email, password);
+    
+    // Salvar dados do usuário do registro
+    const storedUser = await AsyncStorage.getItem('user');
+    if (storedUser) {
+      const userData = sanitizeUser(JSON.parse(storedUser));
+      setUser(userData);
+      await persistUser(userData);
+    }
+    
+    // Tentar fazer login automaticamente após registro
+    try {
+      await signIn(email, password);
+    } catch (loginError) {
+      // Se o login falhar, o usuário ainda está registrado e pode fazer login manualmente
+      console.warn('Login automático após registro falhou:', loginError);
+      // Não lançar erro, pois o registro foi bem-sucedido
+    }
   };
 
   const signOut = async () => {
@@ -111,6 +138,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     await persistToken(null);
     await persistUser(null);
+    // Redirecionar para login após logout
+    router.replace('/(auth)/login');
   };
 
   const updateUser = async (updates: Partial<User>) => {

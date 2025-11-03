@@ -1,8 +1,55 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import ProductCard from "./ProductCard";
+import { getTopItems } from "@/services/itemService";
 
 const TopItems = () => {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTopItems = async () => {
+      try {
+        const data = await getTopItems();
+        setItems(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Erro ao buscar top itens:", err);
+        // Não quebrar a tela se a API falhar, apenas mostrar lista vazia
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTopItems();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Top Itens</Text>
+        </View>
+        <ActivityIndicator size="large" style={styles.loader} />
+      </View>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Top Itens</Text>
+        </View>
+        <Text style={styles.emptyText}>Nenhum item encontrado</Text>
+      </View>
+    );
+  }
+
+  // Dividir itens em grupos de 2 para exibição em linhas
+  const firstRow = items.slice(0, 2);
+  const secondRow = items.slice(2, 4);
+
   return (
     <View style={styles.container}>
       <View style={styles.titleContainer}>
@@ -10,25 +57,36 @@ const TopItems = () => {
       </View>
 
       <View style={styles.frame}>
-        <View style={styles.row}>
-          <View style={styles.cardsContainer}>
-            <ProductCard
-              imageUrl="https://cdn.builder.io/api/v1/image/assets/TEMP/64ae27a947f3ce3614abea08aa5f9c925d00bf4d?placeholderIfAbsent=true&apiKey=fb692f04ed564c8f8e039ab5d2a25978"
-              showArrow={true}
-            />
-            <ProductCard
-              imageUrl="https://cdn.builder.io/api/v1/image/assets/TEMP/4067729467b8b685c7f7e6e0ea93d13516d00a97?placeholderIfAbsent=true&apiKey=fb692f04ed564c8f8e039ab5d2a25978"
-              showArrow={true}
-            />
+        {firstRow.length > 0 && (
+          <View style={styles.row}>
+            <View style={styles.cardsContainer}>
+              {firstRow.map((item, index) => (
+                <ProductCard
+                  key={item.id || item._id || index}
+                  imageUrl={item.images?.[0] || "https://via.placeholder.com/150"}
+                  title={item.title}
+                  description={item.description}
+                  showArrow={true}
+                />
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
-        <View style={styles.row}>
-          <View style={styles.cardsContainer}>
-            <ProductCard imageUrl="https://cdn.builder.io/api/v1/image/assets/TEMP/64ae27a947f3ce3614abea08aa5f9c925d00bf4d?placeholderIfAbsent=true&apiKey=fb692f04ed564c8f8e039ab5d2a25978" />
-            <ProductCard imageUrl="https://cdn.builder.io/api/v1/image/assets/TEMP/4067729467b8b685c7f7e6e0ea93d13516d00a97?placeholderIfAbsent=true&apiKey=fb692f04ed564c8f8e039ab5d2a25978" />
+        {secondRow.length > 0 && (
+          <View style={styles.row}>
+            <View style={styles.cardsContainer}>
+              {secondRow.map((item, index) => (
+                <ProductCard
+                  key={item.id || item._id || index + 2}
+                  imageUrl={item.images?.[0] || "https://via.placeholder.com/150"}
+                  title={item.title}
+                  description={item.description}
+                />
+              ))}
+            </View>
           </View>
-        </View>
+        )}
       </View>
     </View>
   );
@@ -62,6 +120,14 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: 8,
     flexDirection: "row",
+  },
+  loader: {
+    marginVertical: 20,
+  },
+  emptyText: {
+    textAlign: "center",
+    color: "#666",
+    marginVertical: 20,
   },
 });
 

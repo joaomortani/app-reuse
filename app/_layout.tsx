@@ -1,6 +1,6 @@
 import { Stack, router, usePathname } from 'expo-router';
 import { AuthProvider, useAuth } from '../auth/AuthContext';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import theme from '../styles/theme';
@@ -18,19 +18,38 @@ export default function Layout() {
 function LayoutInner() {
   const { userToken, loading } = useAuth();
   const pathname = usePathname();
+  const redirectingRef = useRef(false);
 
   useEffect(() => {
-    if (!loading) {
-      const isAuthRoute =
-        pathname.startsWith('/(auth)') || pathname === '/login' || pathname === '/register';
+    if (loading || redirectingRef.current) return;
+    
+    const isAuthRoute = pathname.startsWith('/(auth)') || pathname === '/login' || pathname === '/register';
+    const isProtectedRoute = pathname.startsWith('/(protected)');
 
-      if (!userToken && !isAuthRoute) {
-        router.replace('/login');
+    // Se não está autenticado e não está em rota de auth, redireciona para login
+    if (!userToken && !isAuthRoute) {
+      if (pathname !== '/(auth)/login') {
+        redirectingRef.current = true;
+        router.replace('/(auth)/login');
+        setTimeout(() => { redirectingRef.current = false; }, 500);
       }
+      return;
+    }
 
-      if (userToken && isAuthRoute) {
-        router.replace('/');
-      }
+    // Se está autenticado e está em rota de auth, redireciona para explorar
+    if (userToken && isAuthRoute) {
+      redirectingRef.current = true;
+      router.replace('/(protected)/index');
+      setTimeout(() => { redirectingRef.current = false; }, 500);
+      return;
+    }
+
+    // Se está autenticado e está na rota raiz, redireciona para explorar
+    if (userToken && pathname === '/') {
+      redirectingRef.current = true;
+      router.replace('/(protected)/index');
+      setTimeout(() => { redirectingRef.current = false; }, 500);
+      return;
     }
   }, [loading, userToken, pathname]);
 

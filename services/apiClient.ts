@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { getApiBaseUrl } from './config';
 
 const apiClient = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8090/api',
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

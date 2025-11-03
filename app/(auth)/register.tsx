@@ -20,8 +20,9 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     try {
       setLoading(true);
-      await signUp(email, password);
-      router.replace('/');
+      setError(null);
+      await signUp(name, email, password);
+      // O layout vai redirecionar automaticamente quando o userToken for atualizado
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao cadastrar usuário.';
       setError(message);
@@ -85,7 +86,7 @@ export default function RegisterScreen() {
               </Button>
             </View>
 
-            <TouchableOpacity onPress={() => router.replace('/login')}>
+            <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
               <Text style={styles.menuText}>Já tem conta? Entrar</Text>
             </TouchableOpacity>
           </MotiView>

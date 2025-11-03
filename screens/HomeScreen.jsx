@@ -6,7 +6,7 @@ import TopItems from "../components/TopItem";
 import baseStyles from "@/styles/baseStyles";
 import styles from "@/styles/styles";
 
-const ExploreScreen = () => {
+const HomeScreen = () => {
   const categories = ["Electronics", "Furniture", "Clothing", "Books", "Miscellaneous"];
   const halfIndex = Math.ceil(categories.length / 2);
   const firstRow = categories.slice(0, halfIndex);
@@ -37,4 +37,4 @@ const ExploreScreen = () => {
   );
 };
 
-export default ExploreScreen;
+export default HomeScreen;

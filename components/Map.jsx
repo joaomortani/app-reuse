@@ -5,7 +5,7 @@ import { requestForegroundPermissionsAsync, getCurrentPositionAsync } from "expo
 import { Portal, Modal, Text, Button } from "react-native-paper";
 
 import { useAuth } from "@/auth/AuthContext";
-import { getItems } from "@/services/itemService";
+import { getNearbyItems } from "@/services/itemService";
 
 const Map = () => {
   const [location, setLocation] = useState(null);
@@ -26,7 +26,7 @@ const Map = () => {
   }, []);
 
   useEffect(() => {
-    if (!location || !userToken) {
+    if (!location) {
       return;
     }
 
@@ -34,7 +34,9 @@ const Map = () => {
 
     const fetchMarkers = async () => {
       try {
-        const data = await getItems(userToken);
+        const lat = location.coords.latitude;
+        const lng = location.coords.longitude;
+        const data = await getNearbyItems(lat, lng, 2, userToken);
         if (!isSubscribed) {
           return;
         }

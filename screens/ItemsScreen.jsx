@@ -6,12 +6,12 @@ import styles from "@/styles/styles";
 import { FAB } from "react-native-paper";
 import ItemsList from "@/components/ItemsList";
 import { router } from "expo-router";
-import { getItems } from "@/services/itemService";
+import { getMyItems } from "@/services/itemService";
 import { useAuth } from "@/auth/AuthContext";
 
 const ItemsScreen = () => {
   const [items, setItems] = useState([]);
-  const { userToken } = useAuth();
+  const { userToken, user } = useAuth();
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -20,7 +20,8 @@ const ItemsScreen = () => {
       }
 
       try {
-        const data = await getItems(userToken);
+        const userId = user?.id;
+        const data = await getMyItems(userToken, userId);
         setItems(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erro ao buscar itens:", err);
@@ -28,7 +29,7 @@ const ItemsScreen = () => {
     };
 
     fetchItems();
-  }, [userToken]);
+  }, [userToken, user]);
 
   return (
     <SafeAreaView style={[baseStyles.container, styles.scrollContainer]}>
@@ -40,7 +41,7 @@ const ItemsScreen = () => {
         style={localStyles.fab}
         icon="plus"
         label="Criar Item"
-        onPress={() => router.push("/item/create-item")}
+        onPress={() => router.push("/(protected)/item/create-item")}
       />
     </SafeAreaView>
   );

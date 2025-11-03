@@ -24,7 +24,7 @@ export default function ProtectedTabsLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Criar Item',
+          title: 'Criar',
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="add-circle-outline" color={color} size={size} />
           ),

@@ -2,21 +2,19 @@
 import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 
-const ProductCard = ({ imageUrl, showArrow = false }) => {
+const ProductCard = ({ imageUrl, title, description, showArrow = false }) => {
+  const displayTitle = title || "Title";
+  const displayDescription = description || "Sem descrição disponível.";
+  
   return (
     <View style={styles.container}>
       <Image source={{ uri: imageUrl }} style={styles.image} />
       <View style={styles.content}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Title</Text>
+          <Text style={styles.title}>{displayTitle}</Text>
         </View>
         <View style={styles.paragraphContainer}>
-          <Text style={styles.paragraph}>
-            {imageUrl ===
-            "https://cdn.builder.io/api/v1/image/assets/TEMP/64ae27a947f3ce3614abea08aa5f9c925d00bf4d?placeholderIfAbsent=true&apiKey=fb692f04ed564c8f8e039ab5d2a25978"
-              ? "Egestas elit dui scelerisque ut eu purus aliquam vitae habitasse."
-              : "Id eros pellentesque facilisi id mollis faucibus commodo enim."}
-          </Text>
+          <Text style={styles.paragraph}>{displayDescription}</Text>
         </View>
       </View>
       <View style={styles.buttonGroup}>

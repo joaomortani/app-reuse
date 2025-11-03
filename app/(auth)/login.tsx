@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../auth/AuthContext';
 import { MotiView } from 'moti';
 import baseStyles from '@/styles/baseStyles';
@@ -21,7 +22,7 @@ export default function LoginScreen() {
       setLoading(true);
       setError(null);
       await signIn(email, password);
-      router.replace('/');
+      // O layout vai redirecionar automaticamente quando o userToken for atualizado
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao conectar.';
       setError(message);
@@ -73,7 +74,7 @@ export default function LoginScreen() {
               </Button>
             </View>
 
-            <TouchableOpacity onPress={() => router.push('/register')}>
+            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
               <Text style={styles.menuText}>Ainda não tem conta? Cadastre-se</Text>
             </TouchableOpacity>
           </MotiView>
