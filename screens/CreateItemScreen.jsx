@@ -7,9 +7,11 @@ import { useRouter } from 'expo-router';
 import baseStyles from '@/styles/baseStyles';
 import styles from '@/styles/styles';
 import { createItem } from '@/services/itemService';
+import { useAuth } from '@/auth/AuthContext';
 
 const CreateItemScreen = () => {
   const router = useRouter();
+  const { userToken } = useAuth();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -36,7 +38,7 @@ const CreateItemScreen = () => {
       return;
     }
 
-    if (!accessToken) {
+    if (!userToken) {
       Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
       router.replace('/login');
       return;
@@ -55,7 +57,7 @@ const CreateItemScreen = () => {
         ],
       };
 
-      await createItem(payload);
+      await createItem(payload, userToken);
       Alert.alert('Sucesso', 'Item criado com sucesso!');
       router.replace('/');
     } catch (err) {
@@ -71,8 +73,21 @@ const CreateItemScreen = () => {
         <Text style={styles.formTitle}>Criar novo item</Text>
 
         <View style={styles.formFields}>
-          <TextInput label="Título" value={title} onChangeText={setTitle} mode="outlined" style={styles.textInput} />
-          <TextInput label="Descrição" value={description} onChangeText={setDescription} multiline mode="outlined" style={styles.textInput} />
+          <TextInput
+            label="Título"
+            value={title}
+            onChangeText={setTitle}
+            mode="outlined"
+            style={styles.textInput}
+          />
+          <TextInput
+            label="Descrição"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            mode="outlined"
+            style={styles.textInput}
+          />
           <TextInput label="Latitude" value={lat} disabled mode="outlined" style={styles.textInput} />
           <TextInput label="Longitude" value={lng} disabled mode="outlined" style={styles.textInput} />
         </View>

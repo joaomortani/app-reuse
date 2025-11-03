@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const data = await auth.login(email, password);
+    const data = await authService.login(email, password);
     const token = data?.token ?? null;
     const userData = (data?.user as User | null) ?? null;
 
@@ -102,11 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
-    await auth.register(email, password);
+    await authService.register(email, password);
   };
 
   const signOut = async () => {
-    await auth.logout();
+    await authService.logout();
     setUserToken(null);
     setUser(null);
     await persistToken(null);

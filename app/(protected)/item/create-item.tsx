@@ -1,3 +1,3 @@
-import ItemsScreen from '@/screens/CreateItemScreen';
+import CreateItemScreen from '@/screens/CreateItemScreen';
 
-export default ItemsScreen;
+export default CreateItemScreen;

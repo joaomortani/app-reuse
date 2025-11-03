@@ -5,14 +5,23 @@ export interface CreateItemPayload {
   description: string;
   lat: number;
   lng: number;
+  images?: string[];
 }
 
-export async function createItem(payload: any) {
+function buildAuthHeaders(token?: string) {
+  if (!token) {
+    return {};
+  }
+
+  return {
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+export async function createItem(payload: CreateItemPayload, token?: string) {
   try {
-    const response = await axios.post(`${API_URL}/v1/items`, payload, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const response = await apiClient.post('/v1/items', payload, {
+      headers: buildAuthHeaders(token),
     });
 
     return response.data?.data ?? response.data;
@@ -21,9 +30,12 @@ export async function createItem(payload: any) {
     throw new Error('Erro ao criar item');
   }
 }
-export async function getItems() {
+
+export async function getItems(token?: string) {
   try {
-    const response = await axios.get(`${API_URL}/v1/items`);
+    const response = await apiClient.get('/v1/items', {
+      headers: buildAuthHeaders(token),
+    });
     return response.data?.data ?? [];
   } catch (error: any) {
     console.error('Erro ao listar itens:', error?.response?.data || error.message);
