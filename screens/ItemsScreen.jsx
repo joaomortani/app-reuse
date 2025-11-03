@@ -35,7 +35,13 @@ const ItemsScreen = () => {
     <SafeAreaView style={[baseStyles.container, styles.scrollContainer]}>
       <ScrollView contentContainerStyle={[styles.mainContent, { paddingVertical: 24 }]}> 
         <Text style={styles.formTitle}>Meus Itens</Text>
-        <ItemsList items={items || []} />
+        {items && items.length > 0 ? (
+          <ItemsList items={items} />
+        ) : (
+          <Text style={styles.menuText}>
+            Você ainda não cadastrou itens. Use o botão abaixo para criar o seu primeiro anúncio.
+          </Text>
+        )}
       </ScrollView>
       <FAB
         style={localStyles.fab}

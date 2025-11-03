@@ -1,7 +1,7 @@
 // screens/CreateItemScreen.tsx
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, Alert, Text } from 'react-native';
-import { TextInput, Button } from 'react-native-paper';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, ScrollView, Alert, Text, StyleSheet, Platform } from 'react-native';
+import { TextInput, Button, Chip, SegmentedButtons, HelperText } from 'react-native-paper';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import baseStyles from '@/styles/baseStyles';
@@ -18,6 +18,30 @@ const CreateItemScreen = () => {
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [loading, setLoading] = useState(false);
+  const [category, setCategory] = useState('');
+  const [customCategory, setCustomCategory] = useState('');
+  const [condition, setCondition] = useState('USED');
+
+  const categories = ['Furniture', 'Electronics', 'Clothing', 'Books', 'Appliances', 'Other'];
+  const conditionOptions = [
+    { value: 'NEW', label: 'Novo' },
+    { value: 'LIKE_NEW', label: 'Seminovo' },
+    { value: 'USED', label: 'Usado' },
+  ];
+
+  const previewPayload = useMemo(() => {
+    const resolvedCategory = customCategory.trim() || category || undefined;
+
+    return {
+      title,
+      description,
+      lat: lat ? Number(lat) : undefined,
+      lng: lng ? Number(lng) : undefined,
+      category: resolvedCategory,
+      condition,
+      images: ['https://placehold.co/600x400?text=Reuse'],
+    };
+  }, [title, description, lat, lng, category, customCategory, condition]);
 
   useEffect(() => {
     (async () => {
@@ -38,6 +62,8 @@ const CreateItemScreen = () => {
       return;
     }
 
+    const resolvedCategory = customCategory.trim() || category;
+
     if (!userToken) {
       Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
       router.replace('/login');
@@ -51,10 +77,9 @@ const CreateItemScreen = () => {
         description,
         lat: parseFloat(lat),
         lng: parseFloat(lng),
-        images: [
-          'https://example.com/img1.jpg',
-          'https://example.com/img2.jpg',
-        ],
+        category: resolvedCategory ? resolvedCategory : undefined,
+        condition,
+        images: ['https://placehold.co/600x400?text=Reuse'],
       };
 
       await createItem(payload, userToken);
@@ -90,6 +115,54 @@ const CreateItemScreen = () => {
           />
           <TextInput label="Latitude" value={lat} disabled mode="outlined" style={styles.textInput} />
           <TextInput label="Longitude" value={lng} disabled mode="outlined" style={styles.textInput} />
+          <View style={localStyles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Categoria</Text>
+            <View style={localStyles.chipGroup}>
+              {categories.map((option) => (
+                <Chip
+                  key={option}
+                  style={localStyles.chip}
+                  selected={category === option}
+                  onPress={() => {
+                    setCategory(option);
+                    setCustomCategory('');
+                  }}
+                >
+                  {option}
+                </Chip>
+              ))}
+            </View>
+            <TextInput
+              label="Outra categoria"
+              value={customCategory}
+              onChangeText={(value) => {
+                setCustomCategory(value);
+                if (value.trim().length > 0) {
+                  setCategory('');
+                }
+              }}
+              placeholder="Informe uma categoria personalizada"
+              mode="outlined"
+              style={styles.textInput}
+            />
+            <HelperText type="info" visible>
+              Selecione uma categoria ou digite uma nova.
+            </HelperText>
+          </View>
+          <View style={localStyles.fieldGroup}>
+            <Text style={styles.fieldLabel}>Condição</Text>
+            <SegmentedButtons
+              value={condition}
+              onValueChange={(value) => setCondition(value || 'USED')}
+              buttons={conditionOptions}
+              density="regular"
+              style={localStyles.segmented}
+            />
+          </View>
+          <View style={localStyles.previewBox}>
+            <Text style={localStyles.previewTitle}>Pré-visualização do payload</Text>
+            <Text style={localStyles.previewText}>{JSON.stringify(previewPayload, null, 2)}</Text>
+          </View>
         </View>
 
         <View style={styles.formActions}>
@@ -103,3 +176,39 @@ const CreateItemScreen = () => {
 };
 
 export default CreateItemScreen;
+
+const localStyles = StyleSheet.create({
+  chipGroup: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  chip: {
+    marginRight: 4,
+    marginBottom: 4,
+  },
+  fieldGroup: {
+    gap: 12,
+  },
+  segmented: {
+    marginTop: 4,
+  },
+  previewBox: {
+    marginTop: 16,
+    backgroundColor: '#F1F8E9',
+    borderRadius: 8,
+    padding: 16,
+    gap: 8,
+  },
+  previewTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#33691E',
+  },
+  previewText: {
+    fontSize: 12,
+    color: '#2E7D32',
+    fontFamily: Platform.select({ ios: 'Courier', default: 'monospace' }),
+  },
+});
