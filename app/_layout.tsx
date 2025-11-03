@@ -16,7 +16,7 @@ export default function Layout() {
 }
 
 function LayoutInner() {
-  const { accessToken, loading } = useAuth();
+  const { userToken, loading } = useAuth();
   const pathname = usePathname();
 
   useEffect(() => {
