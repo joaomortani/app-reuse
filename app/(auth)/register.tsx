@@ -86,7 +86,7 @@ export default function RegisterScreen() {
               </Button>
             </View>
 
-            <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
+            <TouchableOpacity onPress={() => router.replace('/login')}>
               <Text style={styles.menuText}>Já tem conta? Entrar</Text>
             </TouchableOpacity>
           </MotiView>

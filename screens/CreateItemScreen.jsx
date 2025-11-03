@@ -40,7 +40,7 @@ const CreateItemScreen = () => {
 
     if (!userToken) {
       Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
-      router.replace('/(auth)/login');
+      router.replace('/login');
       return;
     }
 
@@ -59,7 +59,7 @@ const CreateItemScreen = () => {
 
       await createItem(payload, userToken);
       Alert.alert('Sucesso', 'Item criado com sucesso!');
-      router.replace('/(protected)/items');
+      router.replace('/items');
     } catch (err) {
       Alert.alert('Erro', 'Falha ao criar item.');
     } finally {

@@ -74,7 +74,7 @@ export default function LoginScreen() {
               </Button>
             </View>
 
-            <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+            <TouchableOpacity onPress={() => router.push('/register')}>
               <Text style={styles.menuText}>Ainda não tem conta? Cadastre-se</Text>
             </TouchableOpacity>
           </MotiView>

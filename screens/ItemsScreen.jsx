@@ -41,7 +41,7 @@ const ItemsScreen = () => {
         style={localStyles.fab}
         icon="plus"
         label="Criar Item"
-        onPress={() => router.push("/(protected)/item/create-item")}
+        onPress={() => router.push("/item/create-item")}
       />
     </SafeAreaView>
   );
