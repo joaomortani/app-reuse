@@ -18,7 +18,7 @@ export default function CreateItemHomeScreen() {
         </Text>
         <TouchableOpacity
           style={localStyles.button}
-          onPress={() => router.push('/(protected)/item/create-item')}
+          onPress={() => router.push('/item/create-item')}
         >
           <Text style={localStyles.buttonText}>Começar</Text>
         </TouchableOpacity>

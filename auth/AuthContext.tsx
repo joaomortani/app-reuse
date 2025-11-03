@@ -139,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await persistToken(null);
     await persistUser(null);
     // Redirecionar para login após logout
-    router.replace('/(auth)/login');
+    router.replace('/login');
   };
 
   const updateUser = async (updates: Partial<User>) => {

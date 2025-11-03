@@ -22,16 +22,17 @@ function LayoutInner() {
 
   useEffect(() => {
     if (loading || redirectingRef.current) return;
-    
-    const isAuthRoute = pathname.startsWith('/(auth)') || pathname === '/login' || pathname === '/register';
-    const isProtectedRoute = pathname.startsWith('/(protected)');
+
+    const isAuthRoute = pathname === '/login' || pathname === '/register';
 
     // Se não está autenticado e não está em rota de auth, redireciona para login
     if (!userToken && !isAuthRoute) {
-      if (pathname !== '/(auth)/login') {
+      if (pathname !== '/login') {
         redirectingRef.current = true;
-        router.replace('/(auth)/login');
-        setTimeout(() => { redirectingRef.current = false; }, 500);
+        router.replace('/login');
+        setTimeout(() => {
+          redirectingRef.current = false;
+        }, 500);
       }
       return;
     }
@@ -39,16 +40,10 @@ function LayoutInner() {
     // Se está autenticado e está em rota de auth, redireciona para explorar
     if (userToken && isAuthRoute) {
       redirectingRef.current = true;
-      router.replace('/(protected)/index');
-      setTimeout(() => { redirectingRef.current = false; }, 500);
-      return;
-    }
-
-    // Se está autenticado e está na rota raiz, redireciona para explorar
-    if (userToken && pathname === '/') {
-      redirectingRef.current = true;
-      router.replace('/(protected)/index');
-      setTimeout(() => { redirectingRef.current = false; }, 500);
+      router.replace('/');
+      setTimeout(() => {
+        redirectingRef.current = false;
+      }, 500);
       return;
     }
   }, [loading, userToken, pathname]);
