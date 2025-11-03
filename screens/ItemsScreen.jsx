@@ -7,24 +7,20 @@ import { FAB } from "react-native-paper";
 import ItemsList from "@/components/ItemsList";
 import { router } from "expo-router";
 import { getItems } from "@/services/itemService";
+import { useAuth } from "@/auth/AuthContext";
 
 const ItemsScreen = () => {
   const [items, setItems] = useState([]);
-  const { accessToken } = useAuth();
+  const { userToken } = useAuth();
 
   useEffect(() => {
     const fetchItems = async () => {
-      if (!accessToken) {
+      if (!userToken) {
         return;
       }
 
       try {
-        if (!userToken) {
-          setItems([]);
-          return;
-        }
-
-        const data = await getItems();
+        const data = await getItems(userToken);
         setItems(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erro ao buscar itens:", err);
@@ -32,21 +28,20 @@ const ItemsScreen = () => {
     };
 
     fetchItems();
-  }, [accessToken]);
+  }, [userToken]);
 
   return (
     <SafeAreaView style={[baseStyles.container, styles.scrollContainer]}>
-      <ScrollView contentContainerStyle={[styles.mainContent, { paddingVertical: 24 }]}>
+      <ScrollView contentContainerStyle={[styles.mainContent, { paddingVertical: 24 }]}> 
         <Text style={styles.formTitle}>Meus Itens</Text>
         <ItemsList items={items || []} />
       </ScrollView>
       <FAB
         style={localStyles.fab}
         icon="plus"
+        label="Criar Item"
         onPress={() => router.push("/item/create-item")}
-      >
-        Create Item
-      </FAB>
+      />
     </SafeAreaView>
   );
 };

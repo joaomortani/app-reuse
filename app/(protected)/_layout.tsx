@@ -6,10 +6,10 @@ export default function ProtectedTabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-    tabBarActiveTintColor: '#FFFFFF',
-    tabBarStyle: {
-      backgroundColor: '#1B5E20',
-    },
+        tabBarActiveTintColor: '#FFFFFF',
+        tabBarStyle: {
+          backgroundColor: '#1B5E20',
+        },
       }}
     >
       <Tabs.Screen
@@ -26,14 +26,14 @@ export default function ProtectedTabsLayout() {
         options={{
           title: 'Criar Item',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="house" color={color} size={size} />
+            <MaterialIcons name="add-circle-outline" color={color} size={size} />
           ),
         }}
       />
       <Tabs.Screen
         name="items"
         options={{
-          title: 'Item',
+          title: 'Meus Itens',
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="category" color={color} size={size} />
           ),
@@ -48,7 +48,7 @@ export default function ProtectedTabsLayout() {
           ),
         }}
       />
-        <Tabs.Screen
+      <Tabs.Screen
         name="item/create-item"
         options={{
           href: null, // impede que apareça na tabbar

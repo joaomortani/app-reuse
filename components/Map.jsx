@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import { View, StyleSheet } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { requestForegroundPermissionsAsync, getCurrentPositionAsync } from "expo-location";
+import { Portal, Modal, Text, Button } from "react-native-paper";
+
 import { useAuth } from "@/auth/AuthContext";
 import { getItems } from "@/services/itemService";
 
 const Map = () => {
   const [location, setLocation] = useState(null);
   const [markers, setMarkers] = useState([]);
+  const [showNoItemsModal, setShowNoItemsModal] = useState(false);
   const { userToken } = useAuth();
 
   async function requestLocationPermission() {
@@ -21,7 +24,7 @@ const Map = () => {
   useEffect(() => {
     requestLocationPermission();
   }, []);
-    
+
   useEffect(() => {
     if (!location || !userToken) {
       return;
@@ -59,6 +62,7 @@ const Map = () => {
           .filter(Boolean);
 
         setMarkers(formattedMarkers);
+        setShowNoItemsModal(formattedMarkers.length === 0);
       } catch (error) {
         console.error("Erro ao carregar itens no mapa:", error);
       }
@@ -70,9 +74,24 @@ const Map = () => {
       isSubscribed = false;
     };
   }, [location, userToken]);
-  
+
   return (
     <View style={{ flex: 1 }}>
+      <Portal>
+        <Modal
+          visible={showNoItemsModal}
+          onDismiss={() => setShowNoItemsModal(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <Text style={styles.modalTitle}>Nenhum item por perto</Text>
+          <Text style={styles.modalDescription}>
+            Voltaremos a avisar quando itens estiverem disponíveis próximos a você.
+          </Text>
+          <Button mode="contained" onPress={() => setShowNoItemsModal(false)} style={styles.modalButton}>
+            Entendi
+          </Button>
+        </Modal>
+      </Portal>
       {location && (
         <MapView
           style={{ flex: 1 }}
@@ -91,7 +110,6 @@ const Map = () => {
             title="Você está aqui"
             description="Sua localização atual"
           />
-          {/* Markers para os itens próximos */}
           {markers.map((marker) => (
             <Marker
               key={marker.id}
@@ -104,10 +122,33 @@ const Map = () => {
             />
           ))}
         </MapView>
-
       )}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  modalContainer: {
+    backgroundColor: "white",
+    marginHorizontal: 24,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    gap: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  modalDescription: {
+    fontSize: 14,
+    textAlign: "center",
+    color: "#555",
+  },
+  modalButton: {
+    alignSelf: "stretch",
+  },
+});
 
 export default Map;

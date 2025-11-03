@@ -1,3 +1,3 @@
-import ExploreScreen from '@/screens/HomeScreen';
+import CreateItemScreen from '@/screens/CreateItemScreen';
 
-export default ExploreScreen;
+export default CreateItemScreen;
