@@ -8,6 +8,7 @@ import React, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import * as authService from './authService';
+import { setUnauthorizedHandler } from '@/services/apiClient';
 
 type User = {
   id?: string;
@@ -87,6 +88,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     loadSession();
+  }, []);
+
+  useEffect(() => {
+    const handleUnauthorized = async () => {
+      setUserToken(null);
+      setUser(null);
+      await persistToken(null);
+      await persistUser(null);
+      router.replace('/login');
+    };
+
+    setUnauthorizedHandler(handleUnauthorized);
+
+    return () => {
+      setUnauthorizedHandler(null);
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
