@@ -5,6 +5,7 @@ export interface CreateItemPayload {
   description: string;
   lat: number;
   lng: number;
+  categoryId?: string | null;
   category?: string | null;
   condition?: string;
   images?: string[];
@@ -22,10 +23,23 @@ function buildAuthHeaders(token?: string) {
 
 export async function createItem(payload: CreateItemPayload, token?: string) {
   try {
-    const body: CreateItemPayload = {
-      ...payload,
-      images: payload.images && payload.images.length > 0 ? payload.images : ['https://placehold.co/600x400?text=Reuse'],
+    const body: Record<string, any> = {
+      title: payload.title,
+      description: payload.description,
+      lat: payload.lat,
+      lng: payload.lng,
+      condition: payload.condition,
+      images:
+        payload.images && payload.images.length > 0
+          ? payload.images
+          : ['https://placehold.co/600x400?text=Reuse'],
     };
+
+    if (payload.categoryId) {
+      body.categoryId = payload.categoryId;
+    } else if (payload.category) {
+      body.category = payload.category;
+    }
 
     const response = await apiClient.post('/items', body, {
       headers: buildAuthHeaders(token),

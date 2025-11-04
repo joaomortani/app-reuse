@@ -1,6 +1,6 @@
 // screens/CreateItemScreen.tsx
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, ScrollView, Alert, Text, StyleSheet, Platform } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, ScrollView, Alert, Text, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { TextInput, Button, Chip, SegmentedButtons, HelperText } from 'react-native-paper';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
@@ -8,6 +8,7 @@ import baseStyles from '@/styles/baseStyles';
 import styles from '@/styles/styles';
 import { createItem } from '@/services/itemService';
 import { useAuth } from '@/auth/AuthContext';
+import { createCategory, getCategories } from '@/services/categoryService';
 
 const CreateItemScreen = () => {
   const router = useRouter();
@@ -18,11 +19,17 @@ const CreateItemScreen = () => {
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
   const [loading, setLoading] = useState(false);
-  const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesError, setCategoriesError] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
+  const [selectedCategoryName, setSelectedCategoryName] = useState('');
   const [customCategory, setCustomCategory] = useState('');
+  const [customCategoryDescription, setCustomCategoryDescription] = useState('');
   const [condition, setCondition] = useState('USED');
 
-  const categories = ['Furniture', 'Electronics', 'Clothing', 'Books', 'Appliances', 'Other'];
+  const [creatingCategory, setCreatingCategory] = useState(false);
+
   const conditionOptions = [
     { value: 'NEW', label: 'Novo' },
     { value: 'LIKE_NEW', label: 'Seminovo' },
@@ -30,18 +37,35 @@ const CreateItemScreen = () => {
   ];
 
   const previewPayload = useMemo(() => {
-    const resolvedCategory = customCategory.trim() || category || undefined;
+    const resolvedCategory = customCategory.trim() || selectedCategoryName || undefined;
+    const resolvedCategoryId = selectedCategoryId || undefined;
 
     return {
       title,
       description,
       lat: lat ? Number(lat) : undefined,
       lng: lng ? Number(lng) : undefined,
+      categoryId: resolvedCategoryId,
       category: resolvedCategory,
       condition,
       images: ['https://placehold.co/600x400?text=Reuse'],
     };
-  }, [title, description, lat, lng, category, customCategory, condition]);
+  }, [title, description, lat, lng, selectedCategoryId, selectedCategoryName, customCategory, condition]);
+
+  const loadCategories = useCallback(async () => {
+    try {
+      setCategoriesLoading(true);
+      setCategoriesError('');
+      const data = await getCategories();
+      setCategories(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+      setCategories([]);
+      setCategoriesError('Não foi possível carregar as categorias disponíveis.');
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -56,13 +80,33 @@ const CreateItemScreen = () => {
     })();
   }, []);
 
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
+  const resolveExistingCategory = useCallback(
+    (name) => {
+      if (!name) {
+        return null;
+      }
+
+      const normalized = name.trim().toLowerCase();
+      if (!normalized) {
+        return null;
+      }
+
+      return categories.find((category) => category?.name?.trim()?.toLowerCase() === normalized) || null;
+    },
+    [categories],
+  );
+
   const handleSubmit = async () => {
     if (!title || !description || !lat || !lng) {
       Alert.alert('Erro', 'Todos os campos obrigatórios devem ser preenchidos.');
       return;
     }
 
-    const resolvedCategory = customCategory.trim() || category;
+    const customCategoryName = customCategory.trim();
 
     if (!userToken) {
       Alert.alert('Erro', 'Sessão expirada. Faça login novamente.');
@@ -72,12 +116,52 @@ const CreateItemScreen = () => {
 
     try {
       setLoading(true);
+      let categoryIdToUse = selectedCategoryId;
+      let categoryNameToUse = selectedCategoryName;
+
+      if (!categoryIdToUse && customCategoryName) {
+        const existing = resolveExistingCategory(customCategoryName);
+        if (existing) {
+          categoryIdToUse = existing.id;
+          categoryNameToUse = existing.name;
+          setSelectedCategoryId(existing.id);
+          setSelectedCategoryName(existing.name);
+          setCustomCategory('');
+          setCustomCategoryDescription('');
+        } else {
+          try {
+            setCreatingCategory(true);
+            const newCategory = await createCategory(
+              {
+                name: customCategoryName,
+                description: customCategoryDescription.trim() || undefined,
+              },
+              userToken,
+            );
+            categoryIdToUse = newCategory.id;
+            categoryNameToUse = newCategory.name;
+            setCategories((prev) => [newCategory, ...prev]);
+            setSelectedCategoryId(newCategory.id);
+            setSelectedCategoryName(newCategory.name);
+            setCustomCategory('');
+            setCustomCategoryDescription('');
+          } catch (err) {
+            console.error('Erro ao criar categoria:', err);
+            Alert.alert('Erro', 'Não foi possível criar a categoria informada.');
+            return;
+          } finally {
+            setCreatingCategory(false);
+          }
+        }
+      }
+
       const payload = {
         title,
         description,
         lat: parseFloat(lat),
         lng: parseFloat(lng),
-        category: resolvedCategory ? resolvedCategory : undefined,
+        categoryId: categoryIdToUse ? categoryIdToUse : undefined,
+        category: !categoryIdToUse && categoryNameToUse ? categoryNameToUse : undefined,
         condition,
         images: ['https://placehold.co/600x400?text=Reuse'],
       };
@@ -117,36 +201,61 @@ const CreateItemScreen = () => {
           <TextInput label="Longitude" value={lng} disabled mode="outlined" style={styles.textInput} />
           <View style={localStyles.fieldGroup}>
             <Text style={styles.fieldLabel}>Categoria</Text>
+            {categoriesLoading ? (
+              <ActivityIndicator size="small" color="#1B5E20" />
+            ) : null}
+            {categoriesError ? (
+              <HelperText type="error" visible>
+                {categoriesError}
+              </HelperText>
+            ) : null}
             <View style={localStyles.chipGroup}>
               {categories.map((option) => (
                 <Chip
-                  key={option}
+                  key={option.id}
                   style={localStyles.chip}
-                  selected={category === option}
+                  selected={selectedCategoryId === option.id}
                   onPress={() => {
-                    setCategory(option);
+                    setSelectedCategoryId(option.id);
+                    setSelectedCategoryName(option.name);
                     setCustomCategory('');
+                    setCustomCategoryDescription('');
                   }}
                 >
-                  {option}
+                  {option.name}
                 </Chip>
               ))}
             </View>
+            <Button mode="text" onPress={loadCategories} disabled={categoriesLoading} compact>
+              Atualizar categorias
+            </Button>
             <TextInput
-              label="Outra categoria"
+              label="Nova categoria"
               value={customCategory}
               onChangeText={(value) => {
                 setCustomCategory(value);
                 if (value.trim().length > 0) {
-                  setCategory('');
+                  setSelectedCategoryId('');
+                  setSelectedCategoryName('');
                 }
               }}
-              placeholder="Informe uma categoria personalizada"
+              placeholder="Informe o nome de uma nova categoria"
               mode="outlined"
               style={styles.textInput}
             />
+            {customCategory.trim().length > 0 ? (
+              <TextInput
+                label="Descrição da categoria"
+                value={customCategoryDescription}
+                onChangeText={setCustomCategoryDescription}
+                placeholder="Descreva brevemente a categoria"
+                mode="outlined"
+                multiline
+                style={styles.textInput}
+              />
+            ) : null}
             <HelperText type="info" visible>
-              Selecione uma categoria ou digite uma nova.
+              Selecione uma categoria existente ou informe uma nova. Categorias novas serão criadas automaticamente.
             </HelperText>
           </View>
           <View style={localStyles.fieldGroup}>
@@ -166,7 +275,12 @@ const CreateItemScreen = () => {
         </View>
 
         <View style={styles.formActions}>
-          <Button mode="contained" onPress={handleSubmit} loading={loading} disabled={loading}>
+          <Button
+            mode="contained"
+            onPress={handleSubmit}
+            loading={loading || creatingCategory}
+            disabled={loading || creatingCategory}
+          >
             Criar Item
           </Button>
         </View>

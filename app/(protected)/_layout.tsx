@@ -33,10 +33,7 @@ export default function ProtectedTabsLayout() {
       <Tabs.Screen
         name="items"
         options={{
-          title: 'Meus Itens',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="category" color={color} size={size} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen

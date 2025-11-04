@@ -32,7 +32,15 @@ interface ItemDetail {
   images?: string[];
   condition?: string;
   status?: string;
-  category?: string | null;
+  categoryId?: string | null;
+  category?:
+    | string
+    | {
+        id?: string;
+        name?: string;
+        description?: string | null;
+      }
+    | null;
   lat?: number | string | null;
   lng?: number | string | null;
   owner?: {
@@ -111,6 +119,21 @@ const ProductDetailScreen: React.FC = () => {
 
   const coverImage = item?.images?.[0] || FALLBACK_ITEM_IMAGE;
   const canTrade = Boolean(item?.owner?.email);
+  const categoryLabel = useMemo(() => {
+    if (!item?.category) {
+      return null;
+    }
+
+    if (typeof item.category === "string") {
+      return item.category;
+    }
+
+    if (typeof item.category === "object") {
+      return item.category?.name ?? null;
+    }
+
+    return null;
+  }, [item?.category]);
 
   const handleGoBack = useCallback(() => {
     router.back();
@@ -203,9 +226,9 @@ const ProductDetailScreen: React.FC = () => {
                 {item.status}
               </Chip>
             ) : null}
-            {item.category ? (
+            {categoryLabel ? (
               <Chip icon="tag" style={localStyles.chip} textStyle={localStyles.chipText}>
-                {item.category}
+                {categoryLabel}
               </Chip>
             ) : null}
           </View>
