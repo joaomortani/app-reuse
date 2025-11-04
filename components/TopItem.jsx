@@ -1,92 +1,104 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import ProductCard from "./ProductCard";
+import EmptyState from "./EmptyState";
 import { getTopItems } from "@/services/itemService";
 
-const TopItems = () => {
+const TopItems = ({ onItemPress }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchTopItems = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getTopItems();
+      setItems(Array.isArray(data) ? data : []);
+      setError("");
+    } catch (err) {
+      console.error("Erro ao buscar top itens:", err);
+      setItems([]);
+      setError("Não foi possível carregar os itens em destaque.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchTopItems = async () => {
-      try {
-        const data = await getTopItems();
-        setItems(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Erro ao buscar top itens:", err);
-        // Não quebrar a tela se a API falhar, apenas mostrar lista vazia
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTopItems();
-  }, []);
+  }, [fetchTopItems]);
+
+  const handlePress = useCallback(
+    (item) => {
+      if (!item) {
+        return;
+      }
+
+      onItemPress?.(item);
+    },
+    [onItemPress],
+  );
+
+  const displayedItems = useMemo(() => items.slice(0, 4), [items]);
 
   if (loading) {
     return (
       <View style={styles.container}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Top Itens</Text>
+          <Text style={styles.title}>Itens em destaque</Text>
         </View>
         <ActivityIndicator size="large" style={styles.loader} />
       </View>
     );
   }
 
-  if (items.length === 0) {
+  if (error) {
     return (
       <View style={styles.container}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Top Itens</Text>
+          <Text style={styles.title}>Itens em destaque</Text>
         </View>
-        <Text style={styles.emptyText}>Nenhum item encontrado</Text>
+        <EmptyState
+          title="Algo deu errado"
+          description={error}
+          actionLabel="Tentar novamente"
+          onActionPress={fetchTopItems}
+        />
       </View>
     );
   }
 
-  // Dividir itens em grupos de 2 para exibição em linhas
-  const firstRow = items.slice(0, 2);
-  const secondRow = items.slice(2, 4);
+  if (displayedItems.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>Itens em destaque</Text>
+        </View>
+        <EmptyState
+          title="Nenhum item em destaque"
+          description="Assim que novos itens forem adicionados, eles aparecerão aqui."
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.titleContainer}>
-        <Text style={styles.title}>Top Itens</Text>
+        <Text style={styles.title}>Itens em destaque</Text>
       </View>
 
-      <View style={styles.frame}>
-        {firstRow.length > 0 && (
-          <View style={styles.row}>
-            <View style={styles.cardsContainer}>
-              {firstRow.map((item, index) => (
-                <ProductCard
-                  key={item.id || item._id || index}
-                  imageUrl={item.images?.[0] || "https://via.placeholder.com/150"}
-                  title={item.title}
-                  description={item.description}
-                  showArrow={true}
-                />
-              ))}
-            </View>
-          </View>
-        )}
-
-        {secondRow.length > 0 && (
-          <View style={styles.row}>
-            <View style={styles.cardsContainer}>
-              {secondRow.map((item, index) => (
-                <ProductCard
-                  key={item.id || item._id || index + 2}
-                  imageUrl={item.images?.[0] || "https://via.placeholder.com/150"}
-                  title={item.title}
-                  description={item.description}
-                />
-              ))}
-            </View>
-          </View>
-        )}
+      <View style={styles.cardsWrapper}>
+        {displayedItems.map((item) => (
+          <ProductCard
+            key={item.id || item._id}
+            imageUrl={item.images?.[0]}
+            title={item.title}
+            description={item.description}
+            showArrow
+            onPress={() => handlePress(item)}
+          />
+        ))}
       </View>
     </View>
   );
@@ -94,40 +106,26 @@ const TopItems = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 57,
-    paddingHorizontal: 21,
-    marginBottom: 20,
+    marginTop: 32,
+    paddingHorizontal: 4,
+    marginBottom: 16,
   },
   titleContainer: {
-    marginBottom: 14,
+    marginBottom: 16,
   },
   title: {
     color: "#000",
     fontFamily: "Montserrat",
-    fontSize: 36,
+    fontSize: 24,
     fontWeight: "700",
   },
-  frame: {
-    fontFamily: "Roboto",
-  },
-  row: {
-    width: "100%",
-    maxWidth: 361,
-    marginBottom: 9,
-  },
-  cardsContainer: {
+  cardsWrapper: {
     display: "flex",
-    width: "100%",
-    gap: 8,
-    flexDirection: "row",
+    flexDirection: "column",
+    gap: 16,
   },
   loader: {
-    marginVertical: 20,
-  },
-  emptyText: {
-    textAlign: "center",
-    color: "#666",
-    marginVertical: 20,
+    marginVertical: 24,
   },
 });
 
