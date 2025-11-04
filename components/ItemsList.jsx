@@ -44,11 +44,23 @@ const ItemsList = ({ items }) => {
           ) : null}
           <Card.Content>
             <Title>{item.title}</Title>
-            {item.category ? (
-              <Chip icon="tag" style={styles.chip} compact>
-                {item.category}
-              </Chip>
-            ) : null}
+            {(() => {
+              const categoryName =
+                typeof item.category === 'string'
+                  ? item.category
+                  : item.category && typeof item.category === 'object'
+                    ? item.category.name
+                    : null;
+              if (!categoryName) {
+                return null;
+              }
+
+              return (
+                <Chip icon="tag" style={styles.chip} compact>
+                  {categoryName}
+                </Chip>
+              );
+            })()}
             <Paragraph>{item.description}</Paragraph>
             <View style={styles.metaRow}>
               {item.condition ? (
