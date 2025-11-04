@@ -91,14 +91,42 @@ export async function getMyItems(token?: string, userId?: string) {
   }
 }
 
-export async function getItems(page: number = 1, limit: number = 10) {
+export interface PaginatedItemsResponse<T = any> {
+  items: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+function normalizeNumber(value: any, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+export async function getItems(page: number = 1, limit: number = 10): Promise<PaginatedItemsResponse> {
   try {
     const response = await apiClient.get(`/items?page=${page}&limit=${limit}`);
-    
+
     // Backend retorna: {success: true, data: {items: [...], total, page, limit, totalPages}}
-    const items = response.data?.data?.items || response.data?.data || [];
-    
-    return Array.isArray(items) ? items : [];
+    const data = response.data?.data ?? {};
+    const items = Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+
+    const total = normalizeNumber(data?.total, items.length);
+    const currentPage = normalizeNumber(data?.page, page);
+    const currentLimit = normalizeNumber(data?.limit, limit);
+    const totalPages = normalizeNumber(
+      data?.totalPages,
+      currentLimit > 0 ? Math.max(1, Math.ceil(total / currentLimit)) : 1,
+    );
+
+    return {
+      items,
+      total,
+      page: currentPage,
+      limit: currentLimit,
+      totalPages,
+    };
   } catch (error: any) {
     console.error('Erro ao listar itens:', error?.response?.data || error.message);
     throw new Error('Erro ao listar itens');
@@ -124,14 +152,29 @@ export async function getNearbyItems(lat: number, lng: number, radius: number = 
 export async function getTopItems() {
   try {
     const response = await apiClient.get('/items/top');
-    
+
     // Backend retorna: {success: true, data: [...]}
     const items = response.data?.data || [];
-    
+
     return Array.isArray(items) ? items : [];
   } catch (error: any) {
     console.error('Erro ao listar top itens:', error?.response?.data || error.message);
     throw new Error('Erro ao listar top itens');
+  }
+}
+
+export async function getItemById(id: string) {
+  if (!id) {
+    throw new Error('ID do item é obrigatório');
+  }
+
+  try {
+    const response = await apiClient.get(`/items/${id}`);
+
+    return response.data?.data ?? response.data;
+  } catch (error: any) {
+    console.error('Erro ao buscar item:', error?.response?.data || error.message);
+    throw new Error('Erro ao buscar item');
   }
 }
   

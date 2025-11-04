@@ -1,14 +1,25 @@
-
 import React from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet, Pressable } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 
-const ProductCard = ({ imageUrl, title, description, showArrow = false }) => {
+const ProductCard = ({
+  imageUrl,
+  title,
+  description,
+  showArrow = false,
+  onPress,
+  actionLabel = "Ver detalhes",
+}) => {
   const displayTitle = title || "Title";
   const displayDescription = description || "Sem descrição disponível.";
-  
+  const displayImage = imageUrl || "https://placehold.co/600x400?text=Reuse";
+
   return (
-    <View style={styles.container}>
-      <Image source={{ uri: imageUrl }} style={styles.image} />
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.container, pressed ? styles.pressed : null]}
+    >
+      <Image source={{ uri: displayImage }} style={styles.image} />
       <View style={styles.content}>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>{displayTitle}</Text>
@@ -18,25 +29,10 @@ const ProductCard = ({ imageUrl, title, description, showArrow = false }) => {
         </View>
       </View>
       <View style={styles.buttonGroup}>
-        <View style={styles.button}>
-          <View style={styles.buttonTextContainer}>
-            <Text style={styles.buttonText}>More Info</Text>
-          </View>
-          {showArrow && (
-            <Image
-              source={{
-                uri:
-                  imageUrl ===
-                  "https://cdn.builder.io/api/v1/image/assets/TEMP/64ae27a947f3ce3614abea08aa5f9c925d00bf4d?placeholderIfAbsent=true&apiKey=fb692f04ed564c8f8e039ab5d2a25978"
-                    ? "https://cdn.builder.io/api/v1/image/assets/TEMP/c8da40212b911686c56feb4a81e7ae26beb8a7f8?placeholderIfAbsent=true&apiKey=fb692f04ed564c8f8e039ab5d2a25978"
-                    : "https://cdn.builder.io/api/v1/image/assets/TEMP/7cd8b81fbf92a1d01a7eb058fc0ee87cfd003bf4?placeholderIfAbsent=true&apiKey=fb692f04ed564c8f8e039ab5d2a25978",
-              }}
-              style={styles.buttonIcon}
-            />
-          )}
-        </View>
+        <Text style={styles.buttonText}>{actionLabel}</Text>
+        {showArrow ? <MaterialIcons name="arrow-forward" size={20} color="#0F62FE" /> : null}
       </View>
-    </View>
+    </Pressable>
   );
 };
 
@@ -48,18 +44,20 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 8,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     marginBottom: 16,
+    overflow: "hidden",
+  },
+  pressed: {
+    opacity: 0.92,
   },
   image: {
     aspectRatio: 0.75,
     width: "100%",
     minHeight: 220,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
   },
   content: {
     width: "100%",
@@ -67,6 +65,7 @@ const styles = StyleSheet.create({
     paddingRight: 16,
     paddingTop: 24,
     paddingBottom: 16,
+    gap: 16,
   },
   titleContainer: {
     width: "100%",
@@ -78,7 +77,7 @@ const styles = StyleSheet.create({
     color: "#21272A",
   },
   paragraphContainer: {
-    marginTop: 16,
+    marginTop: 0,
   },
   paragraph: {
     fontSize: 14,
@@ -91,30 +90,16 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
     paddingRight: 16,
     paddingBottom: 16,
-  },
-  button: {
     minHeight: 48,
-    paddingRight: 8,
-    paddingTop: 12,
-    paddingBottom: 12,
-    alignItems: "center",
     flexDirection: "row",
-    justifyContent: "center",
-    gap: 16,
-  },
-  buttonTextContainer: {
-    alignSelf: "stretch",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   buttonText: {
     fontSize: 14,
     color: "#0F62FE",
     fontWeight: "500",
     letterSpacing: 0.5,
-  },
-  buttonIcon: {
-    aspectRatio: 1,
-    width: 24,
-    alignSelf: "stretch",
   },
 });
 

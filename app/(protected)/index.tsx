@@ -1,38 +1,397 @@
-import React from "react";
-import { View, Text, ScrollView } from "react-native";
-import AppLogo from "@/components/AppLogo";
-import CategoryItem from "@/components/CategoryItem";
-import TopItems from "@/components/TopItem";
-import baseStyles from "@/styles/baseStyles";
-import styles from "@/styles/styles";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Image,
+  Pressable,
+  ActivityIndicator,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Button } from "react-native-paper";
+import { requestForegroundPermissionsAsync, getCurrentPositionAsync } from "expo-location";
+import { router } from "expo-router";
 
-export default function ExploreScreen() {
-  const categories = ["Electronics", "Furniture", "Clothing", "Books", "Miscellaneous"];
-  const halfIndex = Math.ceil(categories.length / 2);
-  const firstRow = categories.slice(0, halfIndex);
-  const secondRow = categories.slice(halfIndex);
+import AppLogo from "@/components/AppLogo";
+import baseStyles from "@/styles/baseStyles";
+import globalStyles from "@/styles/styles";
+import TopItems from "@/components/TopItem";
+import Map from "@/components/Map";
+import EmptyState from "@/components/EmptyState";
+import { getItems, getNearbyItems } from "@/services/itemService";
+import { useAuth } from "@/auth/AuthContext";
+import {
+  FALLBACK_ITEM_IMAGE,
+  calculateDistance,
+  formatCondition,
+  formatDistance,
+  parseCoordinate,
+  type Coordinates,
+} from "@/utils/itemHelpers";
+
+const PUBLIC_ITEMS_LIMIT = 10;
+type Item = {
+  id?: string;
+  _id?: string;
+  title?: string;
+  description?: string;
+  images?: string[];
+  condition?: string;
+  lat?: number | string;
+  lng?: number | string;
+  owner?: {
+    name?: string;
+    email?: string;
+  };
+};
+
+function ExploreRoute() {
+  const { userToken } = useAuth();
+
+  const [publicItems, setPublicItems] = useState<Item[]>([]);
+  const [publicPage, setPublicPage] = useState(1);
+  const [publicHasMore, setPublicHasMore] = useState(true);
+  const [publicLoading, setPublicLoading] = useState(true);
+  const [publicLoadingMore, setPublicLoadingMore] = useState(false);
+  const [publicError, setPublicError] = useState("");
+
+  const [nearbyItems, setNearbyItems] = useState<Item[]>([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [nearbyError, setNearbyError] = useState("");
+  const [locationError, setLocationError] = useState("");
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [showNearbyEmptyModal, setShowNearbyEmptyModal] = useState(false);
+
+  const fetchPublicItems = useCallback(
+    async (pageToLoad: number = 1) => {
+      if (pageToLoad === 1) {
+        setPublicLoading(true);
+        setPublicError("");
+      } else {
+        setPublicLoadingMore(true);
+      }
+
+      try {
+        const data = await getItems(pageToLoad, PUBLIC_ITEMS_LIMIT);
+        const nextItems = Array.isArray(data.items) ? data.items : [];
+
+        setPublicItems((prev) => (pageToLoad === 1 ? nextItems : [...prev, ...nextItems]));
+        setPublicPage(data.page);
+        setPublicHasMore(data.page < data.totalPages);
+      } catch (error) {
+        console.error("Erro ao listar itens públicos:", error);
+        if (pageToLoad === 1) {
+          setPublicItems([]);
+          setPublicError("Não foi possível carregar os itens públicos.");
+        }
+      } finally {
+        if (pageToLoad === 1) {
+          setPublicLoading(false);
+        } else {
+          setPublicLoadingMore(false);
+        }
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    fetchPublicItems(1);
+  }, [fetchPublicItems]);
+
+  const fetchNearby = useCallback(
+    async (coords: Coordinates) => {
+      try {
+        setNearbyError("");
+        const data = await getNearbyItems(coords.latitude, coords.longitude, 2, userToken || undefined);
+        const normalized = Array.isArray(data) ? data : [];
+        setNearbyItems(normalized);
+        setShowNearbyEmptyModal(normalized.length === 0);
+      } catch (error) {
+        console.error("Erro ao buscar itens próximos:", error);
+        setNearbyItems([]);
+        setShowNearbyEmptyModal(false);
+        setNearbyError("Não foi possível carregar os itens próximos.");
+      }
+    },
+    [userToken],
+  );
+
+  const requestLocation = useCallback(async () => {
+    setNearbyLoading(true);
+    setLocationError("");
+
+    try {
+      const { status } = await requestForegroundPermissionsAsync();
+
+      if (status !== "granted") {
+        setUserLocation(null);
+        setNearbyItems([]);
+        setShowNearbyEmptyModal(false);
+        setLocationError(
+          "Precisamos da sua permissão de localização para mostrar itens que estão perto de você.",
+        );
+        return;
+      }
+
+      const currentPosition = await getCurrentPositionAsync();
+      const coords = {
+        latitude: currentPosition.coords.latitude,
+        longitude: currentPosition.coords.longitude,
+      };
+
+      setUserLocation(coords);
+      await fetchNearby(coords);
+    } catch (error) {
+      console.error("Erro ao obter localização:", error);
+      setUserLocation(null);
+      setNearbyItems([]);
+      setShowNearbyEmptyModal(false);
+      setNearbyError("Não foi possível obter sua localização.");
+    } finally {
+      setNearbyLoading(false);
+    }
+  }, [fetchNearby]);
+
+  useEffect(() => {
+    requestLocation();
+  }, [requestLocation]);
+
+  const handleLoadMorePublic = useCallback(() => {
+    if (!publicHasMore || publicLoadingMore) {
+      return;
+    }
+
+    fetchPublicItems(publicPage + 1);
+  }, [fetchPublicItems, publicHasMore, publicLoadingMore, publicPage]);
+
+  const handleNavigateToItem = useCallback((item: Item) => {
+    const itemId = item?.id ?? item?._id;
+    if (!itemId) {
+      return;
+    }
+
+    router.push({ pathname: "/item/[id]", params: { id: String(itemId) } });
+  }, []);
+
+  const nearbyList = useMemo(() => nearbyItems.slice(0, 6), [nearbyItems]);
+  const publicList = useMemo(() => publicItems, [publicItems]);
+
+  const renderItemCard = useCallback(
+    (item: Item, options?: { showDistance?: boolean }) => {
+      const imageSource = item.images?.[0] || FALLBACK_ITEM_IMAGE;
+      const parsedLat = parseCoordinate(item.lat);
+      const parsedLng = parseCoordinate(item.lng);
+
+      let distanceLabel: string | null = null;
+      if (options?.showDistance && userLocation && parsedLat !== null && parsedLng !== null) {
+        const distance = calculateDistance(userLocation, { latitude: parsedLat, longitude: parsedLng });
+        distanceLabel = formatDistance(distance);
+      }
+
+      return (
+        <Pressable
+          key={item.id || item._id}
+          style={localStyles.itemCard}
+          onPress={() => handleNavigateToItem(item)}
+        >
+          <Image source={{ uri: imageSource }} style={localStyles.itemImage} />
+          <View style={localStyles.itemContent}>
+            <Text style={localStyles.itemTitle}>{item.title}</Text>
+            <Text style={localStyles.itemDescription} numberOfLines={2}>
+              {item.description || "Sem descrição disponível."}
+            </Text>
+            <View style={localStyles.itemMetaRow}>
+              {item.condition ? (
+                <Text style={localStyles.itemMeta}>{formatCondition(item.condition)}</Text>
+              ) : null}
+              {distanceLabel ? <Text style={localStyles.itemMeta}>{distanceLabel}</Text> : null}
+            </View>
+            {item.owner?.name ? (
+              <Text style={localStyles.itemOwner}>Doador: {item.owner.name}</Text>
+            ) : null}
+          </View>
+        </Pressable>
+      );
+    },
+    [handleNavigateToItem, userLocation],
+  );
 
   return (
-    <View style={baseStyles.container}>
-      <ScrollView contentContainerStyle={[styles.mainContent, { paddingTop: 24 }]}>
+    <SafeAreaView style={baseStyles.container}>
+      <ScrollView contentContainerStyle={[globalStyles.mainContent, localStyles.content]}>
         <AppLogo />
-        <Text style={styles.formTitle}>Explorar</Text>
+        <Text style={globalStyles.formTitle}>Explorar</Text>
 
-        <View style={{ paddingHorizontal: 20, marginTop: 8 }}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginVertical: 10 }}>
-            {firstRow.map((label, index) => (
-              <CategoryItem key={index} label={label} />
-            ))}
+        <TopItems onItemPress={handleNavigateToItem} />
+
+        <View style={localStyles.section}>
+          <Text style={localStyles.sectionTitle}>Itens próximos</Text>
+          <View style={localStyles.mapContainer}>
+            <Map
+              userLocation={userLocation}
+              items={nearbyItems}
+              showEmptyModal={showNearbyEmptyModal}
+              onDismissEmptyModal={() => setShowNearbyEmptyModal(false)}
+            />
           </View>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginVertical: 10 }}>
-            {secondRow.map((label, index) => (
-              <CategoryItem key={index} label={label} />
-            ))}
-          </View>
+
+          {nearbyLoading ? (
+            <ActivityIndicator size="large" style={localStyles.sectionLoader} />
+          ) : null}
+
+          {!nearbyLoading && locationError ? (
+            <EmptyState
+              title="Ative sua localização"
+              description={locationError}
+              actionLabel="Tentar novamente"
+              onActionPress={requestLocation}
+            />
+          ) : null}
+
+          {!nearbyLoading && !locationError && nearbyError ? (
+            <EmptyState
+              title="Algo deu errado"
+              description={nearbyError}
+              actionLabel="Tentar novamente"
+              onActionPress={requestLocation}
+            />
+          ) : null}
+
+          {!nearbyLoading && !locationError && !nearbyError && nearbyList.length === 0 ? (
+            <EmptyState
+              title="Nenhum item por perto"
+              description="Ainda não encontramos doações próximas. Continue explorando a lista pública!"
+            />
+          ) : null}
+
+          {!nearbyLoading && !locationError && !nearbyError && nearbyList.length > 0 ? (
+            <View style={localStyles.itemsList}>
+              {nearbyList.map((item) => renderItemCard(item, { showDistance: true }))}
+            </View>
+          ) : null}
         </View>
 
-        <TopItems />
+        <View style={localStyles.section}>
+          <Text style={localStyles.sectionTitle}>Itens públicos</Text>
+
+          {publicLoading && publicItems.length === 0 ? (
+            <ActivityIndicator size="large" style={localStyles.sectionLoader} />
+          ) : null}
+
+          {!publicLoading && publicError ? (
+            <EmptyState
+              title="Não foi possível carregar"
+              description={publicError}
+              actionLabel="Tentar novamente"
+              onActionPress={() => fetchPublicItems(1)}
+            />
+          ) : null}
+
+          {!publicLoading && !publicError && publicList.length === 0 ? (
+            <EmptyState
+              title="Nenhum item disponível"
+              description="Ainda não há itens públicos cadastrados. Volte em breve para conferir as novidades."
+            />
+          ) : null}
+
+          {!publicLoading && !publicError && publicList.length > 0 ? (
+            <View style={localStyles.itemsList}>
+              {publicList.map((item) => renderItemCard(item))}
+            </View>
+          ) : null}
+
+          {publicHasMore && !publicLoading && !publicError ? (
+            <Button
+              mode="outlined"
+              onPress={handleLoadMorePublic}
+              loading={publicLoadingMore}
+              style={localStyles.loadMoreButton}
+            >
+              Carregar mais
+            </Button>
+          ) : null}
+        </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
+
+const localStyles = StyleSheet.create({
+  content: {
+    paddingBottom: 48,
+  },
+  section: {
+    marginTop: 32,
+    gap: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#263238",
+  },
+  mapContainer: {
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  sectionLoader: {
+    marginTop: 16,
+  },
+  itemsList: {
+    gap: 16,
+  },
+  itemCard: {
+    flexDirection: "row",
+    gap: 16,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#CFD8DC",
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  itemImage: {
+    width: 88,
+    height: 88,
+    borderRadius: 12,
+    backgroundColor: "#ECEFF1",
+  },
+  itemContent: {
+    flex: 1,
+    gap: 8,
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#263238",
+  },
+  itemDescription: {
+    fontSize: 14,
+    color: "#607D8B",
+  },
+  itemMetaRow: {
+    flexDirection: "row",
+    gap: 12,
+    flexWrap: "wrap",
+  },
+  itemMeta: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#2E7D32",
+  },
+  itemOwner: {
+    fontSize: 12,
+    color: "#455A64",
+  },
+  loadMoreButton: {
+    alignSelf: "center",
+    marginTop: 8,
+  },
+});
+
+export default ExploreRoute;
